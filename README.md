@@ -5,9 +5,12 @@
 ## 📦 安装
 
 ```bash
+# 从本仓库安装
 hermes skills install feishu-table-render --repo techysy/yangyu-skills-hub
 hermes skills install strava-api --repo techysy/yangyu-skills-hub
 ```
+
+> 无需注册，指定 `--repo` 即可直装 🚀
 
 ## 🛠️ 技能列表
 
