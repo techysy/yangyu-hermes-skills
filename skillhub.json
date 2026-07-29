@@ -7,6 +7,10 @@
     "feishu-table-render": {
       "path": "skills/productivity/feishu-table-render",
       "description": "修复飞书 Markdown 表格渲染问题"
+    },
+    "strava-api": {
+      "path": "skills/social-media/strava-api",
+      "description": "Strava API 技能 — 查询骑行活动、月度统计、分析数据"
     }
   }
 }
