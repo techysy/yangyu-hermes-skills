@@ -1,0 +1,12 @@
+{
+  "name": "yangyu-skills",
+  "description": "洋芋的 Hermes Agent 技能集合",
+  "author": "techysy",
+  "repo": "https://github.com/techysy/yangyu-skills",
+  "skills": {
+    "feishu-table-render": {
+      "path": "skills/productivity/feishu-table-render",
+      "description": "修复飞书 Markdown 表格渲染问题"
+    }
+  }
+}
