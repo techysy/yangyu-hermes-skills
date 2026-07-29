@@ -11,6 +11,14 @@
     "strava-api": {
       "path": "skills/social-media/strava-api",
       "description": "Strava API 技能 — 查询骑行活动、月度统计、分析数据"
+    },
+    "fnos-app-development": {
+      "path": "skills/productivity/fnos-app-development",
+      "description": "飞牛NAS (fnOS) 应用开发——fnpack打包、manifest、生命周期脚本、入口配置、调试排错"
+    },
+    "outdoor-trip-planner": {
+      "path": "skills/cycling/outdoor-trip-planner",
+      "description": "户外出行规划（骑行/徒步）——查天气、查高铁票、查路线、一站式搞定"
     }
   }
 }
