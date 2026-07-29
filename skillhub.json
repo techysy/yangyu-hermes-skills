@@ -2,7 +2,7 @@
   "name": "yangyu-skills",
   "description": "洋芋的 Hermes Agent 技能集合",
   "author": "techysy",
-  "repo": "https://github.com/techysy/yangyu-skills",
+  "repo": "https://github.com/techysy/yangyu-skills-hub",
   "skills": {
     "feishu-table-render": {
       "path": "skills/productivity/feishu-table-render",
