@@ -1,3 +1,22 @@
-# yangyu-skills
+# yangyu-skills-hub
 
-我的 Hermes Agent 技能仓库
+> 洋芋的 Hermes Agent 技能集合
+
+## 安装
+
+```bash
+# 从本仓库安装技能
+hermes skills install feishu-table-render --repo techysy/yangyu-skills-hub
+hermes skills install strava-api --repo techysy/yangyu-skills-hub
+```
+
+## 技能列表
+
+| 技能 | 分类 | 说明 |
+|:----|:----|:------|
+| feishu-table-render | productivity | 修复飞书 Markdown 表格渲染问题 |
+| strava-api | social-media | Strava 骑行/活动数据查询、月度统计 |
+
+## 贡献
+
+欢迎提交 PR 或 Issue！
