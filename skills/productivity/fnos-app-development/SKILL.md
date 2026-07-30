@@ -126,7 +126,9 @@ The `desktop_applaunchname` in manifest must match the key name here (`MyApp.App
 
 ## App Dependencies (`install_dep_apps`)
 
-Declare runtime dependencies in `manifest` using `install_dep_apps` — fnOS installs them automatically before your app's lifecycle scripts run:
+> ⚠️ **Pitfall**: `install_dep_apps` in manifest causes "应用包不符合系统版本要求" on fnOS 1.1.31xx+ even though documented in fnOS dev docs. The validator rejects it. **Remove this field entirely** from manifest. Handle dependency installation in `cmd/install_init` or `cmd/main` at first run instead.
+
+If `install_dep_apps` IS supported on your fnOS version, declare runtime dependencies:
 
 ```ini
 # Depend on Node.js runtime (from fnOS app center)
@@ -323,10 +325,12 @@ Env vars for silent install: `wizard_agent_url=http://localhost:9120`
 
 ## appcenter-cli
 
+> ⚠️ **Deprecated in fnOS 1.1.31xx+**: `appcenter-cli install-fpk` has been removed from newer fnOS versions. The official install method is now **Web UI manual install only** (App Center → 手动安装). The commands below are preserved for reference on older fnOS versions.
+
 | Command | Purpose |
 |---------|---------|
 | `appcenter-cli list` | List installed apps |
-| `appcenter-cli install-fpk myapp.fpk` | Install from fpk |
+| `appcenter-cli install-fpk myapp.fpk` | Install from fpk (removed in 1.1.31xx+) |
 | `appcenter-cli uninstall myapp` | Uninstall app |
 | `appcenter-cli start/stop myapp` | Start/stop app |
 | `appcenter-cli status myapp` | Check status |
@@ -340,10 +344,67 @@ cd myapp
 fnpack build          # Produces myapp.fpk
 ```
 
+### Build Requirements
+
+**CRITICAL**: `fnpack build` requires an `app/` directory with actual files — it does NOT accept a pre-built `app.tgz`. If you have a pre-built tarball, extract it first:
+
+```bash
+# WRONG — fnpack will fail with "bin: no such file or directory"
+mv app.tgz app_backup.tgz
+
+# RIGHT — extract into app/ directory
+mkdir app
+tar xzf app_backup.tgz -C app
+fnpack build
+```
+
+### Working Directory Structure (verified v1.3.0)
+
+The fnOS validator is strict about directory structure. This layout has been verified to work on fnOS 1.1.31xx:
+
+```
+myapp/
+├── manifest              # App metadata (NO install_dep_apps field!)
+├── ICON.PNG              # 64x64
+├── ICON_256.PNG          # 256x256
+├── app/
+│   ├── server/           # Source code (bundled)
+│   ├── ui/
+│   │   ├── config        # Entry config
+│   │   └── images/       # Icons
+│   └── www/              # Static files (if any)
+├── cmd/
+│   ├── main              # start/stop/status
+│   ├── install_init      # no-op (exit 0)
+│   ├── install_callback  # venv setup
+│   ├── config_init       # no-op
+│   ├── config_callback   # no-op
+│   ├── upgrade_init      # no-op
+│   ├── upgrade_callback  # no-op
+│   ├── uninstall_init    # cleanup
+│   └── uninstall_callback # cleanup
+├── config/
+│   ├── privilege         # 4-space indented JSON
+│   └── resource          # 4-space indented JSON with 2 shares
+└── wizard/               # OPTIONAL — may cause validator issues
+```
+
+**Key findings (2026-07-30)**:
+1. `install_dep_apps = nodejs_v24` in manifest causes rejection — remove it
+2. `config/privilege` MUST use 4-space indentation matching fnpack template, NOT minified JSON
+3. `config/resource` needs at least 2 shares (AppName + AppName/data)
+4. Pre-built `app.tgz` causes build failure — must use `app/` directory
+5. `wizard/` directory may cause validator issues — test without it first
+
 ## Troubleshooting
 
 ### "应用包格式不符合系统版本要求"
-fpk rejected. Follow the template-diff procedure above. Common causes: wrong manifest format, missing `arch`/`distributor`, wrong privilege/resource structure.
+fpk rejected. Follow the template-diff procedure above. Common causes (in order of likelihood):
+1. **`install_dep_apps` in manifest** — remove it entirely, handle deps in cmd/install_init
+2. **`config/privilege` JSON formatting** — must use 4-space indentation matching template exactly, NOT minified JSON
+3. **`config/resource` shares empty** — must have at least one share entry
+4. Missing `arch`/`distributor` in manifest
+5. Wrong manifest format (quotes around values, missing spaces around `=`)
 
 ### "本地应用启动失败" / "拒绝了我们的连接请求"
 App installed but service didn't start. Check:
@@ -685,8 +746,26 @@ img.resize((256, 256), Image.LANCZOS).save('app/ui/images/icon_256.png')
 - **cmd/main working dir**: fnOS runs cmd/main from the download cache (`/vol4/appcenter-downloads/...`), not the app dir. `$(dirname "$0")/..` is WRONG. Use `TRIM_APPDEST` env var.
 - **Bundle source, don't download**: install_init network downloads fail silently (DNS, rate limits, timing). Put all files in `app/` at build time.
 - **manifest format**: use `key = value` with spaces around `=`, values WITHOUT quotes. Must include `arch`, `distributor`, and `desktop_applaunchname`.
-- **config/privilege**: use `{"defaults": {"run-as": "package"}}`. NOT a `permissions` array.
-- **config/resource**: must have valid `data-share` structure with `shares` array. Not empty `{}`.
+- **config/privilege**: fnOS validator requires **exact JSON indentation** matching the fnpack template. Minified JSON like `{"defaults": {"run-as": "package"}}` (single line) causes rejection. Required format:
+  ```json
+  {
+      "defaults":
+      {
+          "run-as": "package"
+      }
+  }
+  ```
+- **config/resource**: must have valid `data-share` structure with `shares` array containing at least ONE entry. Empty `{"data-share": {"shares": []}}` causes "应用包不符合系统要求" rejection. Required format:
+  ```json
+  {
+    "data-share": {
+      "shares": [{
+        "name": "AppName",
+        "permission": {"rw": ["AppName"]}
+      }]
+    }
+  }
+  ```
 - **External URLs not supported**: fnOS app entries (`type: "iframe"` or `type: "url"`) can ONLY reference local services. The `port` field constructs `http://127.0.0.1:{port}/`. External IPs fail with "拒绝连接". Workaround: create `app/ui/index.cgi` with a 302 redirect and reference it via `/cgi/ThirdParty/{appname}/index.cgi/` path in the entry config.
 - **API server host binding requires gateway restart**: Changing `api_server.host` in `config.yaml` from `127.0.0.1` to `0.0.0.0` does NOT take effect until the gateway process is restarted. The gateway reads config at startup only. And restarting the gateway is blocked from within its own process tree. This creates a multi-step trap for NAS deployments: you change the config, the dashboard still shows "Chat unavailable" from LAN, and you can't restart the gateway from the same SSH session. **Fix**: Change config.yaml, then restart gateway from a SEPARATE SSH session or ask the user to run `hermes gateway restart` from a desktop terminal.
 
@@ -724,6 +803,8 @@ hermes-webui's `server.py` reads from **process environment variables only** —
 
 See `references/hermes-webui-fnos-package.md` for the full Hermes WebUI fnOS package reference, including Gateway detection logic, build-deploy cycle, iteration history, proxy settings, and hybrid mode pattern.
 
+See `references/hermes-webui-fnos-standalone-repo.md` for the standalone repo pattern (not forking upstream) with full structure and design decisions.
+
 See `references/hermes-agent-native-fnos.md` for native Hermes Agent installation on fnOS (bypassing trim.hermes app).
 
 See `references/connection-switching-feature.md` for the WebUI connection switching feature (local/remote Gateway).
@@ -754,23 +835,48 @@ hermes-webui (nesquena/hermes-webui) connects to the Hermes **Gateway API** (por
 
 The Dashboard (port 19119) is a web management UI for config, sessions, memory — it does NOT provide the chat API.
 
-### hermes serve vs hermes proxy — Critical Distinction
+### "Chat unavailable: 1" on dashboard from LAN
 
-The Hermes CLI has several commands that look similar but provide completely different things:
+Dashboard shows "Chat unavailable: 1" and "Chat disconnected" when accessed from another machine on the LAN. The dashboard UI loads but chat doesn't work.
 
-| Command | What it provides | OpenAI API (`/v1/chat/completions`)? |
-|---------|------------------|--------------------------------------|
-| `hermes dashboard` | Dashboard management UI (TCP port) | No |
-| `hermes serve` | Full Dashboard Web UI (SPA) + plugin routes | **No** — serves React SPA at all unmatched paths |
-| `hermes proxy start` | OpenAI-compatible HTTP proxy | **Yes** — but requires OAuth login to provider |
-| `hermes gateway start` | Messaging gateway (Telegram, Discord) | WebSocket-based, not HTTP REST |
+**Root cause**: API server is bound to `127.0.0.1` (loopback only). The browser on the LAN machine can't reach it.
 
-**Why hermes-webui can't use `hermes serve`**: The serve command runs a React SPA that catches all routes and returns HTML. It has `/api/ws` (WebSocket) and `/api/plugins/*` but NOT `/v1/chat/completions`. When hermes-webui sends requests to `/v1/models` or `/v1/chat/completions`, the SPA catch-all returns HTML instead of JSON.
+**Fix**:
+1. Change `api_server.host` in config.yaml from `127.0.0.1` to `0.0.0.0`
+2. **Restart the gateway** — config changes only take effect at startup
+3. Verify: `curl -sf http://192.168.31.101:18642/v1/models -H 'Authorization: Bearer <key>'` should return JSON
 
-**For hermes-webui with local Hermes Agent on fnOS**:
-1. Hermes Agent must have API keys configured (via Dashboard at 19119)
-2. `hermes proxy start` provides the OpenAI-compatible API, but requires OAuth login (Nous Portal or xAI Grok)
-3. **Simplest**: Use remote Gateway mode — point hermes-webui to Arch VM's Gateway API at port 8642
+**Trap**: You can't restart the gateway from within its own process tree (see "Gateway safety feature blocks restart" above). Use a separate SSH session or ask the user to run `hermes gateway restart`.
+
+### Separate repo pattern for fnOS packages
+
+When wrapping an upstream project (e.g. hermes-webui) as an fnOS app, **create a SEPARATE repo** — do NOT fork the upstream.
+
+**Why not fork**:
+- Forks get cluttered with upstream commits
+- The fnOS package only needs packaging files (manifest, cmd/, config/, wizard/, icons)
+- The actual source is installed at runtime via npm/pip
+- Maintaining a fork adds merge burden for upstream updates
+
+**Separate repo structure**:
+```
+myapp-fnos/
+├── manifest              # App metadata
+├── ICON.PNG / ICON_256.PNG
+├── app/ui/config         # Entry config (type: "url" or "iframe")
+├── app/ui/images/        # Entry icons
+├── cmd/main              # start/stop/status
+├── cmd/install_init      # npm install / pip install
+├── cmd/config_callback   # Save wizard settings
+├── config/privilege
+├── config/resource
+├── wizard/install        # Install wizard
+├── wizard/config         # Settings page
+├── README.md
+└── CHANGELOG.md
+```
+
+The upstream source (e.g. `hermes-web-ui` npm package) is fetched during `install_init` or first run — not bundled in the repo.
 
 ### fnOS Hermes Agent missing API keys
 
@@ -907,6 +1013,53 @@ API_SERVER_ENABLED=true
 API_SERVER_HOST=127.0.0.1
 API_SERVER_PORT=18642
 ```
+
+## Dashboard Systemd Service (user-level)
+
+The built-in dashboard (`hermes dashboard`) can run as a systemd user service. Since v0.19.0, binding to `0.0.0.0` requires basic auth — no unauthenticated public bind is allowed.
+
+```bash
+# 1. Generate password hash
+/home/YangYu/hermes-env/bin/python3 -c \
+  "from plugins.dashboard_auth.basic import hash_password; print(hash_password('your-password'))"
+
+# 2. Add to config.yaml
+dashboard:
+  basic_auth:
+    username: admin
+    password_hash: scrypt$16384$8$1$...
+
+# 3. Create service file
+mkdir -p ~/.config/systemd/user
+cat > ~/.config/systemd/user/hermes-dashboard.service << 'EOF'
+[Unit]
+Description=Hermes Agent Dashboard
+After=network.target
+
+[Service]
+Type=simple
+Environment=HERMES_HOME=/home/YangYu/.hermes
+Environment=HOME=/home/YangYu
+ExecStart=/home/YangYu/hermes-env/bin/hermes dashboard --port 8787 --host 0.0.0.0 --no-open --skip-build
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+EOF
+
+# 4. Enable + start (requires linger for persistence after logout)
+loginctl enable-linger $(whoami)   # one-time setup
+systemctl --user daemon-reload
+systemctl --user enable --now hermes-dashboard.service
+
+# 5. Verify
+ss -tlnp | grep 8787
+```
+
+**Pitfall**: If you forget `loginctl enable-linger`, the dashboard stops when you log out. Check with `loginctl show-user $(whoami) | grep Linger`.
+
+**v0.19.0 note**: `hermes dashboard` IS the web UI — it replaces the separate WebUI npm app. The dashboard provides chat, sessions, files, models, logs, cron, skills. No need for a separate hermes-webui-fnos package for basic use.
 
 ## Gateway Systemd Service Management
 

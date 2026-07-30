@@ -3,8 +3,79 @@
 ## Package History
 
 - **v0.1.0-v0.3.0**: Remote Gateway mode only (nesquena/hermes-webui)
+- **v0.3.1**: ✅ WORKING — verified installable, no `install_dep_apps` in manifest
 - **v0.4.0-v1.1.0**: Hybrid mode (local + remote kernel)
 - **v1.2.0-v1.3.0**: Fixed proxy and Gateway settings
+- **v0.52.106**: Standalone repo (techysy/hermes-webui-fnos), version synced with upstream
+
+## Working Manifest Format (v0.3.1 verified)
+
+```ini
+appname               = HermesWebUI
+version               = 1.0.4
+display_name          = Hermes WebUI
+desc                  = Hermes Agent 网页管理界面 — 连 Arch VM Gateway，飞牛纯前端
+arch                  = x86_64
+source                = thirdparty
+maintainer            = yangyu
+distributor           = yangyu
+service_port          = 8787
+desktop_uidir         = ui
+desktop_applaunchname = HermesWebUI.Application
+ctl_stop              = true
+```
+
+**Key**: NO `install_dep_apps` field — this causes rejection on fnOS 1.1.31xx+.
+
+## Working config/privilege Format (v0.3.1 verified)
+
+Must use **4-space indentation** matching fnpack template exactly:
+
+```json
+{
+    "defaults":
+    {
+        "run-as": "package"
+    }
+}
+```
+
+**NOT** minified: `{"defaults": {"run-as": "package"}}` — causes rejection.
+
+## Working config/resource Format (v0.3.1 verified)
+
+Must have at least ONE share entry with proper structure:
+
+```json
+{
+    "data-share":
+    {
+        "shares":
+        [
+            {
+                "name": "HermesWebUI",
+                "permission":
+                {
+                    "rw":
+                    [
+                        "HermesWebUI"
+                    ]
+                }
+            },
+            {
+                "name": "HermesWebUI/data",
+                "permission":
+                {
+                    "rw":
+                    [
+                        "HermesWebUI"
+                    ]
+                }
+            }
+        ]
+    }
+}
+```
 
 ## Key Learnings
 
@@ -208,3 +279,66 @@ PROXY_URL=""
 3. **Dashboard returns 401 Unauthorized**: The dashboard needs authentication. For local use, this is usually handled by the wrapper's Unix socket communication.
 
 4. **Port conflict**: If another service is using port 19119, the dashboard won't start. Check with `ss -tlnp | grep 19119`.
+
+## Uninstall Lifecycle Scripts
+
+### cmd/uninstall_init (pre-uninstall)
+
+Stops running processes and cleans up node_modules:
+
+```bash
+#!/bin/bash
+set -euo pipefail
+APP_NAME="${TRIM_APPNAME:-HermesWebUI}"
+DATA_DIR="${TRIM_PKGVAR:-/vol4/@appdata/${APP_NAME}}"
+
+# Stop running process
+PID_FILE="${DATA_DIR}/webui.pid"
+if [ -f "${PID_FILE}" ]; then
+  PID=$(cat "${PID_FILE}")
+  kill "${PID}" 2>/dev/null || true
+  sleep 2
+  kill -9 "${PID}" 2>/dev/null || true
+  rm -f "${PID_FILE}"
+fi
+
+# Clean npm cache
+rm -rf "${DATA_DIR}/node_modules" 2>/dev/null || true
+
+# Clean logs
+rm -f "${DATA_DIR}"/*.log 2>/dev/null || true
+
+# Clean temp files
+rm -f /tmp/hermes-pty-active-*.json 2>/dev/null || true
+
+exit 0
+```
+
+### cmd/uninstall_callback (post-uninstall)
+
+Removes data, config, and log directories:
+
+```bash
+#!/bin/bash
+set -euo pipefail
+APP_NAME="${TRIM_APPNAME:-HermesWebUI}"
+DATA_DIR="${TRIM_PKGVAR:-/vol4/@appdata/${APP_NAME}}"
+CONF_DIR="${TRIM_PKGETC:-/vol4/@appconf/${APP_NAME}}"
+LOG_FILE="/var/log/apps/${APP_NAME}.log"
+
+# Remove data directory
+rm -rf "${DATA_DIR}" 2>/dev/null || true
+
+# Remove config directory
+rm -rf "${CONF_DIR}" 2>/dev/null || true
+
+# Remove logs
+rm -f "${LOG_FILE}" "${LOG_FILE}"-*.gz 2>/dev/null || true
+
+# Clean systemd residuals
+rm -f /tmp/hermes-dashboard.service 2>/dev/null || true
+
+exit 0
+```
+
+**Note**: `uninstall_init` runs BEFORE the app is removed (can stop processes). `uninstall_callback` runs AFTER removal (cleans up residual directories).

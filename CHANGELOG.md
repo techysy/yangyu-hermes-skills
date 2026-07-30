@@ -6,6 +6,7 @@
 
 ### 变更 / Changed
 - **fnos-app-development** — 大幅更新：v0.19.0 dashboard 架构、Gateway 进程树保护陷阱、API server 绑定变更、Node.js cookbook、connection switching 等（SKILL.md 388→966行，references 2→8个） / Major update: v0.19.0 dashboard architecture, Gateway process tree protection, API server binding changes, Node.js cookbook, connection switching, etc. (SKILL.md 388→966 lines, references 2→8 files)
+- **fnos-app-development** — 新增 build 要求：app/ 目录必须存在、wizard 可能导致验证失败、install_dep_apps 导致拒绝等 / Added build requirements: app/ directory must exist, wizard may cause validation failure, install_dep_apps causes rejection, etc.
 
 ## 2026-07-29
 
