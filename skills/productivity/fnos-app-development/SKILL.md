@@ -124,6 +124,119 @@ The entry config defines how fnOS opens your app. Two types:
 
 The `desktop_applaunchname` in manifest must match the key name here (`MyApp.Application`). Use `"${wizard_port}"` when port is gathered via install wizard.
 
+## App Dependencies (`install_dep_apps`)
+
+Declare runtime dependencies in `manifest` using `install_dep_apps` — fnOS installs them automatically before your app's lifecycle scripts run:
+
+```ini
+# Depend on Node.js runtime (from fnOS app center)
+install_dep_apps      = nodejs_v24
+```
+
+Multiple dependencies use `:` separator. Version constraints use `>`:
+```ini
+install_dep_apps      = nodejs_v24>20:database>2.2.2:cache
+```
+
+**For Node.js apps**, the node binary will be at `/vol4/@appcenter/nodejs_v24/bin/node`. Always set `PATH` in your lifecycle scripts:
+
+```bash
+NODE_BIN="/vol4/@appcenter/nodejs_v24/bin"
+PATH="${NODE_BIN}:${DATA_DIR}/node_modules/.bin:${PATH}"
+```
+
+npm scripts use `#!/usr/bin/env node` — they require `node` in PATH. When running npm commands:
+
+```bash
+PATH="/vol4/@appcenter/nodejs_v24/bin:${PATH}" npm install hermes-web-ui
+```
+
+## Cookbook: Node.js Web Apps (Hermes Studio pattern)
+
+For Node.js-based web apps packaged as fnOS apps (e.g. Hermes Studio, hermes-web-ui npm package):
+
+1. **manifest**: `install_dep_apps = nodejs_v24`, `service_port = <app-port>`
+2. **install_init**: `npm install <package>` into `$DATA_DIR` (local install, not global)
+3. **cmd/main**: set PATH to include nodejs_v24/bin and node_modules/.bin, then start the app
+4. **wizard/install**: collect Gateway URL and API key if connecting to remote backend
+
+```bash
+# install_init pattern
+NODE_BIN="/vol4/@appcenter/nodejs_v24/bin"
+PATH="${NODE_BIN}:${PATH}"
+cd "${DATA_DIR}"
+npm install hermes-web-ui
+```
+
+```bash
+# cmd/main start pattern
+NODE_BIN="/vol4/@appcenter/nodejs_v24/bin"
+PATH="${NODE_BIN}:${DATA_DIR}/node_modules/.bin:${PATH}"
+STUDIO_DIR="${DATA_DIR}/node_modules/hermes-web-ui"
+
+cd "${STUDIO_DIR}"
+nohup node bin/hermes-web-ui.mjs >> "${LOG}" 2>&1 &
+```
+
+**Known issue**: `npx` requires `node` in PATH via `#!/usr/bin/env node` — the full path to node won't work with npx. Always use `node bin/<script>` directly or set PATH first.
+
+See `references/hermes-studio-fnos-package.md` for a complete Node.js web app reference. See `references/hermes-agent-fnos-architecture.md` for the official Hermes Agent app on fnOS architecture. See `references/hermes-webui-fnos-package.md` for the HermesWebUI package reference with proxy fixes and Gateway configuration.
+
+### Wizard → Env Var Mapping Pitfall
+
+Wizard field values are passed to lifecycle scripts as `wizard_<field_name>` env vars. In cmd/main, reference them correctly:
+
+```bash
+# WRONG — bare field name doesn't exist at runtime
+GATEWAY_URL="${gateway_url}"
+
+# RIGHT — prefixed with wizard_
+GATEWAY_URL="${wizard_gateway_url:-http://default.value}"
+```
+
+Validation: check that `/var/log/apps/<AppName>.log` shows the expected values. If the Gateway URL is empty or default, the wizard values aren't being picked up.
+
+### install_init Cannot Write to TRIM_PKGVAR
+
+**Problem**: During `install_init`, `TRIM_PKGVAR` resolves to `/vol4/@appdata/<AppName>/` but this directory doesn't exist yet — it's created DURING installation, AFTER `install_init` runs. `mkdir -p $TRIM_PKGVAR` fails with `Permission denied`.
+
+**Solutions** (in order of preference):
+1. **Bundle everything in `app/` at build time** — make `install_init` a no-op (`#!/bin/bash\nexit 0`). All source files bundled via `app/server/` or `app/www/` are deployed by fnPack during installation.
+2. **Download in install_init to cwd** — `install_init` runs from the app download directory (`/vol4/appcenter-downloads/<AppName>-<version>-tpk/`), which IS writable. Download source there.
+3. **Defer to cmd/main** — have `cmd/main start` check for the dependency and install it on first run (slower first start but reliable).
+
+```bash
+# Pattern 3: first-run npm install in cmd/main
+start_webui() {
+  ensure_installed() {
+    if [ ! -f "${DATA_DIR}/node_modules/.bin/app" ]; then
+      cd "${DATA_DIR}"
+      npm install app-package
+    fi
+  }
+  ensure_installed || return 1
+  cd "${DATA_DIR}/node_modules/app-package"
+  nohup node bin/app.mjs >> "${LOG}" 2>&1 &
+}
+```
+
+### Wizard Input Not Passed to cmd/main
+
+When a wizard collects user input (e.g. Gateway URL), the values are passed as **environment variables** with the `wizard_` prefix. These are only available to lifecycle scripts that run DURING installation — NOT to `cmd/main` at runtime.
+
+**To persist wizard values for runtime use:**
+1. In `install_callback`, write wizard values to a config file:
+```bash
+echo "gateway_url=${wizard_gateway_url}" > "${TRIM_PKGVAR}/app.conf"
+```
+2. In `cmd/main`, source the config file:
+```bash
+[ -f "${DATA_DIR}/app.conf" ] && source "${DATA_DIR}/app.conf"
+GATEWAY_URL="${gateway_url:-http://default}"
+```
+
+Or hardcode the Gateway URL in cmd/main directly (works for single-deployment apps).
+
 ## Install-Time Environment Variables
 
 fnOS passes these variables to lifecycle scripts. ALWAYS use them — never hardcode paths.
@@ -244,6 +357,18 @@ App installed but service didn't start. Check:
 ### "执行脚本出错且原因未知"
 Install script failed. Check `/var/log/apps/<AppName>.log`. Common cause: network timeout downloading source during install_init. Fix: bundle all source in `app/<dir>` at build time; make install_init a no-op.
 
+### "Gateway returned no assistant message for this turn"
+WebUI connects to Gateway but chat returns empty. Causes:
+1. `USE_REMOTE_GATEWAY=false` but local kernel isn't configured (no config.yaml, no API key) — fix: set `USE_REMOTE_GATEWAY=true` in gateway.env
+2. Gateway API server (port 8642) isn't running or wrong API key — verify with `curl -sf -H "Authorization: Bearer <key>" http://host:8642/v1/models`
+3. WebUI process still running with old config — need restart after changing gateway.env
+
+### hermes-agent local kernel needs config initialization
+On fnOS, `pip install hermes-agent` installs the binary but NOT a config.yaml. The local dashboard returns 401 Unauthorized on `/api/health` because:
+- No `config.yaml` in HERMES_HOME (no API provider keys configured)
+- `hermes setup` is interactive and can't run from SSH as non-owner (binary has `-rwx------` perms)
+- **Fix**: Either pre-configure config.yaml via install_callback, or use remote Gateway mode instead of local kernel
+
 ### Two log files for the same app
 - fnOS lifecycle: `/var/log/apps/<AppName>.log`
 - App's own output: `$TRIM_PKGVAR/<logfile>` (e.g. webui.log)
@@ -278,13 +403,38 @@ echo $! > "${PID_DIR}/dashboard.pid"
 - The dashboard process runs as the app user (HermesWebUI), not root — make sure venv/ and data dirs are owned by that user.
 - When updating from a remote-Gateway version to a bundled version, the old process may need manual kill first (`pkill -f server.py`).
 
+## Hermes Agent on fnOS Architecture
+
+As of v0.19.0, the built-in `hermes dashboard` command IS the web UI — it replaces the need for a separate WebUI npm app. For fnOS packaging, the simplest approach is:
+
+1. Install Hermes Agent natively via pip in a venv
+2. Run `hermes dashboard --port 8787 --host 0.0.0.0 --no-open --skip-build` as a systemd user service
+3. The dashboard provides chat, sessions, files, models, logs, cron, skills — all built-in
+
+This eliminates the complexity of packaging a separate WebUI app (hermes-webui-fnos). The built-in dashboard stays up-to-date with Hermes releases automatically.
+
+**For apps that need a custom UI** or additional features beyond what the built-in dashboard provides, the two-process architecture below still applies.
+
+### Legacy: trim.hermes Two-Process Architecture
+
+1. **Wrapper (Go binary)**: Listens on Unix socket, manages Python runtime lifecycle
+2. **Python Dashboard**: Listens on TCP port 19119, serves the management UI
+
+Key differences from standard Hermes:
+- Wrapper does NOT automatically start the Python dashboard
+- Wrapper listens on Unix socket, not TCP
+- Dashboard must be started separately after wrapper is running
+- Wrapper may appear to be running (PID exists) but dashboard isn't listening
+
+See `references/hermes-agent-fnos-architecture.md` for full details.
+
 ## Gateway Chat Mode (hermes-webui specific)
 
 For Python web apps that proxy chat through a remote Hermes Gateway (instead of running a local agent), set these environment variables before starting the server:
 
 ```bash
 export HERMES_WEBUI_CHAT_BACKEND=gateway
-export HERMES_WEBUI_GATEWAY_BASE_URL="${GATEWAY_URL}"    # e.g. http://192.168.x.x:9119
+export HERMES_WEBUI_GATEWAY_BASE_URL="${GATEWAY_URL}"    # e.g. http://192.168.31.31:9119
 export GATEWAY_HEALTH_URL="${GATEWAY_URL}/api/health"
 export HERMES_API_URL="${GATEWAY_URL}"
 ```
@@ -309,7 +459,168 @@ fi
 
 This only affects first-time users — existing users with cached localStorage values are not overwritten. Common theme/skin combos: `dark+codex`, `dark+default`, `dark+slate`. For Chinese users, add `"language": "zh"` to the settings.
 
+## App Settings Page (wizard/config + config_callback)
+
+fnOS supports a **settings page** for apps, separate from the install wizard. Users access it via App Center → 应用设置.
+
+### How it works
+
+1. Create `wizard/config` — defines the settings form (same JSON format as `wizard/install`)
+2. Create `cmd/config_callback` — runs when user clicks "保存" (save); wizard field values are available as env vars
+3. In `config_callback`, write the values to a config file in the data directory
+4. `cmd/main` reads the config file on startup
+
+### wizard/config
+
+```json
+[
+  {
+    "stepTitle": "Gateway 连接配置",
+    "items": [
+      {
+        "type": "text",
+        "field": "gateway_url",
+        "label": "Gateway 地址",
+        "initValue": "http://192.168.31.31:8642",
+        "rules": [{"required": true, "message": "必填"}]
+      }
+    ]
+  }
+]
+```
+
+### config_callback
+
+```bash
+#!/bin/bash
+# Values from wizard fields are available directly as env vars
+# (without the wizard_ prefix in config lifecycle)
+APP_NAME="${TRIM_APPNAME:-MyApp}"
+DATA_DIR="${TRIM_PKGVAR:-/vol4/@appdata/${APP_NAME}}"
+mkdir -p "${DATA_DIR}"
+cat > "${DATA_DIR}/app.conf" <<-EOF
+GATEWAY_URL="${gateway_url:-http://default}"
+GATEWAY_KEY="${gateway_key:-default-key}"
+EOF
+exit 0
+```
+
+### cmd/main reads the config
+
+```bash
+CONFIG_FILE="${DATA_DIR}/app.conf"
+[ -f "${CONFIG_FILE}" ] && source "${CONFIG_FILE}"
+GATEWAY_URL="${GATEWAY_URL:-http://default}"
+```
+
+**Important**: Unlike `wizard/install` where fields get a `wizard_` prefix, `wizard/config` field values are passed as bare env var names to `config_callback`. No prefix.
+
+### Wizard Checkbox Options Requirement (Workaround)
+
+fnOS wizard requires `checkbox` type fields to have an `options` array. Without it, fnpack build fails with `checkbox options is empty`.
+
+**Workaround**: Use `type: "text"` with `initValue: "true"` or `"false"` for boolean toggles:
+
+```json
+{"type": "text", "field": "use_proxy", "label": "代理开关 (true/false)", "initValue": "true"},
+{"type": "text", "field": "use_remote_gateway", "label": "远程Gateway (true/false)", "initValue": "true"}
+```
+
+In `cmd/main`, parse the string:
+```bash
+USE_PROXY_FLAG="${use_proxy:-true}"
+[ "${USE_PROXY_FLAG}" = "true" ] && export http_proxy="http://..." || true
+```
+
+### Proxy Settings in App Settings
+
+Add HTTP proxy config to wizard/config alongside other settings:
+
+```json
+[
+  {"stepTitle": "Gateway 连接配置", "items": [
+    {"type": "text", "field": "gateway_url", "label": "Gateway 地址", "initValue": "http://192.168.31.31:8642", "rules": [{"required": true}]},
+    {"type": "text", "field": "gateway_key", "label": "API Key", "initValue": "webui-gateway-key-2026"},
+    {"type": "text", "field": "dashboard_url", "label": "Dashboard 地址", "initValue": "http://192.168.31.31:9119"},
+    {"type": "text", "field": "use_remote_gateway", "label": "远程Gateway (true/false)", "initValue": "true"}
+  ]},
+  {"stepTitle": "代理设置", "items": [
+    {"type": "text", "field": "use_proxy", "label": "代理开关 (true/false)", "initValue": "true"},
+    {"type": "text", "field": "proxy_url", "label": "代理地址", "initValue": "http://192.168.31.31:7890"}
+  ]}
+]
+```
+
+In `config_callback`, save all values to a `.env` file:
+```bash
+cat > "${DATA_DIR}/gateway.env" <<-EOF
+USE_REMOTE_GATEWAY="${use_remote_gateway:-true}"
+DASHBOARD_URL="${dashboard_url:-http://192.168.31.31:9119}"
+GATEWAY_URL="${gateway_url:-http://192.168.31.31:8642}"
+GATEWAY_KEY="${gateway_key:-webui-gateway-key-2026}"
+USE_PROXY="${use_proxy:-true}"
+PROXY_URL="${proxy_url:-http://192.168.31.31:7890}"
+EOF
+```
+
+In `cmd/main`, source the env file and apply proxy:
+```bash
+[ -f "${CONFIG_FILE}" ] && source "${CONFIG_FILE}"
+if [ "${USE_PROXY:-false}" = "true" ]; then
+  export http_proxy="${PROXY_URL:-http://192.168.31.31:7890}"
+  export https_proxy="${http_proxy}"
+  export no_proxy="localhost,127.0.0.1,192.168.31.*"
+fi
+```
+
+## Wizard Input Persistence (Passing Wizard Values to Runtime)
+
+Wizard values (`wizard/install`) are only available as env vars during install lifecycle scripts — **NOT** to `cmd/main` at runtime.
+
+**Pattern for runtime persistence:**
+
+```bash
+# install_callback: save wizard values to a config file
+echo "gateway_url=${wizard_gateway_url}" > "${TRIM_PKGVAR}/app.conf"
+echo "gateway_key=${wizard_gateway_key}" >> "${TRIM_PKGVAR}/app.conf"
+chmod 600 "${TRIM_PKGVAR}/app.conf"
+```
+
+```bash
+# cmd/main: source on each start
+DATA_DIR="${TRIM_PKGVAR:-/vol4/@appdata/${APP_NAME}}"
+[ -f "${DATA_DIR}/app.conf" ] && . "${DATA_DIR}/app.conf"
+GATEWAY_URL="${gateway_url:-http://default}"
+```
+
+**Alternative**: Hardcode the URL in cmd/main for single-deployment apps (simpler, no config file needed).
+
+## Node.js Apps: npm install Patterns
+
+| Scenario | Command | Notes |
+|----------|---------|-------|
+| First install (fresh) | `npm install <pkg>` | Downloads all deps, may trigger native addon compilation |
+| Skip native build | `npm install <pkg> --ignore-scripts` | Needed when `node-pty` or other native addons fail (missing C++ build tools on minimal NAS systems) |
+| After failed install | `rm -rf node_modules package*.json` then retry | Clean up partial state |
+| PATH fix | `PATH="/vol4/@appcenter/nodejs_v24/bin:${PATH}" npm ...` | npm scripts use `#!/usr/bin/env node` — must have node in PATH |
+
+**node-pty compilation failure fix**:
+```bash
+# Symptom: npm install fails with node-gyp errors for node-pty
+# Root cause: NAS lacks make/gcc/g++/python — node-pty can't compile
+# Fix: skip native addon scripts
+npm install hermes-web-ui --ignore-scripts
+# node-pty won't be usable but the app starts; only web-terminal feature is affected
+```
+
 ## Install & Uninstall Caveats
+
+### cmd/main owned by root after installation
+
+After `fnpack build` and installation, `/var/apps/{appname}/cmd/` directory and files are owned by **root**. You cannot modify cmd/main from the yangyu user without sudo. This means:
+- **All cmd/main logic must be finalized BEFORE building the fpk** — you cannot hot-patch it after install
+- If you need to change cmd/main after install, ask the user to manually run: `cat /tmp/main_new.sh | sudo tee /var/apps/{appname}/cmd/main > /dev/null && sudo chmod 755 /var/apps/{appname}/cmd/main`
+- The hermes_home/.env file IS writable by the app user and IS read by server.py — use it as a fallback to pass runtime settings without modifying cmd/main
 
 ### appcenter-cli UNINSTALL can delete user directories
 
@@ -350,6 +661,10 @@ appcenter-cli --help
 
 If CLI install fails repeatedly, revert to **Web UI Manual Install** — it handles the wizard correctly.
 
+### Icon not showing after rebuild
+
+If you rebuild an fpk with new icon files but the desktop icon doesn't update after installing, the app must be **uninstalled and reinstalled** — fnOS caches icon data and doesn't refresh from a simple upgrade install. Use Web UI: App Center → Uninstall → Reinstall. `appcenter-cli install-local` may also skip icon refresh.
+
 ### Icon source recommendation
 
 When wrapping an open-source project as an fnOS app, use the project's official icon:
@@ -373,16 +688,279 @@ img.resize((256, 256), Image.LANCZOS).save('app/ui/images/icon_256.png')
 - **config/privilege**: use `{"defaults": {"run-as": "package"}}`. NOT a `permissions` array.
 - **config/resource**: must have valid `data-share` structure with `shares` array. Not empty `{}`.
 - **External URLs not supported**: fnOS app entries (`type: "iframe"` or `type: "url"`) can ONLY reference local services. The `port` field constructs `http://127.0.0.1:{port}/`. External IPs fail with "拒绝连接". Workaround: create `app/ui/index.cgi` with a 302 redirect and reference it via `/cgi/ThirdParty/{appname}/index.cgi/` path in the entry config.
+- **API server host binding requires gateway restart**: Changing `api_server.host` in `config.yaml` from `127.0.0.1` to `0.0.0.0` does NOT take effect until the gateway process is restarted. The gateway reads config at startup only. And restarting the gateway is blocked from within its own process tree. This creates a multi-step trap for NAS deployments: you change the config, the dashboard still shows "Chat unavailable" from LAN, and you can't restart the gateway from the same SSH session. **Fix**: Change config.yaml, then restart gateway from a SEPARATE SSH session or ask the user to run `hermes gateway restart` from a desktop terminal.
+
 - **Gateway safety feature blocks restart**: Hermes Gateway intercepts ANY `systemctl --user restart/stop hermes-gateway.service` from within its own process tree — even SSH to localhost, `systemd-run`, or `kill` + `systemctl start` are caught because the shell inherits the gateway as a parent process. Workaround: SSH from a DIFFERENT LAN machine, reboot the VM, or open a desktop terminal via `computer_use`. Confirmed in practice: even `delegate_task` and `cronjob` cannot bypass this (#30719).
-- **WebUI needs one of two modes for chat**: Without a local Hermes Agent AND without `HERMES_WEBUI_CHAT_BACKEND=gateway`, hermes-webui starts but chat stays non-functional. The UI loads, settings work, but sending messages fails silently. Always set one of: local agent in venv OR Gateway mode with a reachable `HERMES_WEBUI_GATEWAY_BASE_URL`.
+- **WebUI needs one of two modes for chat**: Without a local Hermes Agent AND without `HERMES_WEBUI_CHAT_BACKEND=gateway`, hermes-webui starts but chat stays non-functional. The UI loads, settings work, but sending messages fails silently. Always set one of: local agent in venv OR Gateway mode with a reachable `HERMES_WEBUI_GATEWAY_BASE_URL`.\n- **cmd/main backgrounding blocked by tool**: The terminal tool blocks shell commands containing `&` (background/no-hup) in foreground mode. Always use `terminal(background=true)` for any command that uses `nohup`, `&`, `setsid`, or `disown`. This affects first-run install scripts and server startup commands in cmd/main.\n- **Config change requires app restart**: fnOS runs `config_callback` when user saves settings, but does NOT restart the running process. The service must be manually stopped and started (or cmd/main should watch the config file and reload). For simple setups, document in the wizard: "修改后需重启应用生效".\n- **Hermes Studio (hermes-web-ui npm) is NOT a thin client**: It runs `spawn hermes gateway run` at startup and crashes immediately if `hermes` binary isn't in PATH. The env vars `HERMES_WEB_UI_DISABLE_GATEWAY_AUTOSTART=1`, `HERMES_WEB_UI_MANAGED_GATEWAY=0`, and `GATEWAY_URL` do NOT prevent this — the `hermes` binary check is hardcoded in the Node.js startup. Hermes Studio requires a local Hermes Agent installation to function at all. For thin-client / remote-Gateway use cases, use `nesquena/hermes-webui` or `Eynzof/hermes-webui-cn` (Python) instead.
 - **Strip bloated files before bundling**: When bundling large projects (like hermes-webui) into `app/`, remove heavy files first: `CHANGELOG.md` (1.8MB), `tests/`, `docs/`, `static/` if not needed. Keeps fpk under 5MB vs 22MB+. `rm -rf CHANGELOG.md tests/ docs/ .github/ .git/` before `fnpack build`.
+- **npm native addon compilation fails on NAS**: NAS systems lack C++ build tools (make/gcc/g++/python) needed by `node-gyp`. When `npm install` fails with `node-pty` or similar native addon errors, use `--ignore-scripts`: `npm install <pkg> --ignore-scripts`. The affected feature (e.g. web-terminal) becomes unavailable but the app starts. Only applies to Node.js apps with native dependencies.
+- **npm `#!/usr/bin/env node` PATH issue**: npm, npx, and all npm-installed binaries use `#!/usr/bin/env node` as their shebang. Setting `PATH` before running them is REQUIRED — the full path to node won't help. Always: `PATH="/vol4/@appcenter/nodejs_v24/bin:${PATH}" npm install ...` or `PATH="...${PATH}" npx ...`. Direct invocation: `node /path/to/script.mjs` works without PATH.
+
+#### Python requests `no_proxy` wildcard fails
+
+`no_proxy="localhost,127.0.0.1,192.168.31.*"` does NOT work with Python's `requests` library — it doesn't support shell-style `*` wildcards. Requests to `192.168.31.31:8642` will be sent through the proxy, causing 501 errors or wrong HTTP method concatenation.
+
+**Fix**: Either `unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY no_proxy` before starting the WebUI (for local-network-only use), or use `no_proxy` with explicit IPs:
+```bash
+export no_proxy="localhost,127.0.0.1,192.168.31.101,192.168.31.31"
+```
+
+### Self-contained apps — avoid manual SSH fixes
+
+When an fnOS app needs post-install configuration (editing cmd/main, fixing gateway.env), the user expects the app to handle it through the App Center settings UI, not via SSH commands. **Always prefer**: (1) wizard/config + config_callback for user-facing settings, (2) cmd/main that reads config on startup, (3) default values that work out-of-box. If you must ask the user to run `sudo` commands, the package design is wrong — iterate on the fpk instead.
+
+**User preference (explicit)**: "不要都走命令行操作，需要让应用自己设置 重启" — Don't do everything via CLI; the app must handle settings and restarts automatically through the App Center UI. This is a hard requirement, not a suggestion.
+
+### hermes-webui server.py doesn't read .env files
+
+hermes-webui's `server.py` reads from **process environment variables only** — it does NOT use `python-dotenv` or read `.env` files. Creating a `.env` file in the project directory or HERMES_HOME won't work. All settings must be passed via `export` in `cmd/main` before starting the server.
 
 ### Python Web Service Pitfalls (hermes-webui specific)
 
-- **bootstrap.py needs local Hermes Agent**: `--skip-agent-install` still exits with error. For remote-Gateway mode, run `server.py` directly.
-- **bootstrap.py port is positional**: `python bootstrap.py 8787` NOT `--port 8787`.
-- **server.py env vars**: set `HERMES_WEBUI_HOST`, `HERMES_WEBUI_PORT`, `HERMES_WEBUI_STATE_DIR`, `HERMES_WEBUI_SKIP_ONBOARDING=1`, `HERMES_WEBUI_DISABLE_AGENT_CHECK=1`. Also `HOST` and `PORT` as fallbacks.
-- **iframe vs url**: Debug with `type: "url"` first. iframe may show "连接被拒绝" even when the server is healthy behind fygo-browser.
-- **Remote Gateway mode splits API routing**: Chat is proxied to the remote Gateway (works), but skills/settings are served from the WebUI's own local `hermes_home` filesystem on the NAS. The WebUI's API (`api/routes.py` / `api/config.py`) reads skills from `hermes_home/skills/` and config from `hermes_home/config.yaml` — NOT from the remote Gateway. In remote gateway mode these are empty. Workarounds: sync skills to NAS via cron (`tar|ssh` when rsync unavailable), use Dashboard directly for management, or upgrade to Bundled Agent mode.
+- **Hybrid kernel (local + remote) detection**: In Bundled Agent mode, pip install hermes-agent may fail silently in install_callback (network timeout, permission denied). cmd/main should check at runtime: `if [ -f "$VENV/bin/hermes" ]; then ... else ... fi`. This allows the app to work even when the kernel install fails — it falls back to remote Gateway mode.
+- **Gateway API server (8642) vs Dashboard (9119)**: These are separate services. The Gateway API server exposes OpenAI-compatible endpoints; the Dashboard serves the management UI. WebUI needs BOTH for full functionality. Enable Gateway API via env vars in systemd drop-in: `API_SERVER_ENABLED=true`, `API_SERVER_KEY=<key>`, `API_SERVER_PORT=8642`, `API_SERVER_HOST=0.0.0.0`.
+- **Skills sync from remote**: When rsync isn't available, use `tar czf - skills/ | ssh user@nas "tar xzf - -C /path"` — works without rsync. Set up a cron job (`cronjob action=create no_agent=true`) to run this every 5 minutes.
+- **appcenter-cli install-local can delete /vol4/1000/**: Runs uninstall first, which may wipe user directories with NO audit log. Use Web UI Manual Install instead.
 
-See `references/hermes-webui-fnos-package.md` for the full Hermes WebUI fnOS package reference, including Gateway detection logic, build-deploy cycle, and iteration history.
+See `references/hermes-webui-fnos-package.md` for the full Hermes WebUI fnOS package reference, including Gateway detection logic, build-deploy cycle, iteration history, proxy settings, and hybrid mode pattern.
+
+See `references/hermes-agent-native-fnos.md` for native Hermes Agent installation on fnOS (bypassing trim.hermes app).
+
+See `references/connection-switching-feature.md` for the WebUI connection switching feature (local/remote Gateway).
+
+### hermes setup needs sudo on fnOS
+
+The `hermes setup` command tries to install Chromium dependencies (`postinstall` scripts) which require sudo. On fnOS, the password for the app user is unknown and sudo fails. **Workaround**: Skip the npm install step by running `hermes setup --quick` or manually configuring `config.yaml` and `.env` instead of using the interactive wizard.
+
+### Hermes Agent directory permissions on fnOS
+
+The Hermes Agent needs write access to multiple directories under HERMES_HOME. On fnOS, these directories are created by the agent but may have restrictive permissions (700). The agent process may fail with `PermissionError` on:
+- `logs/` — agent.log, dashboard.log
+- `hooks/` — custom hooks
+- `pairing/` — device pairing
+- `audio_cache/`, `image_cache/` — media cache
+- `skills/`, `memories/` — agent data
+- `sessions/` — conversation sessions
+- `config.yaml`, `.env`, `state.db` — config files
+
+**Fix**: `chmod -R 777 /path/to/hermes_home` after initial setup, or run `hermes setup` once interactively to let the agent create all directories with correct permissions.
+
+### hermes-webui needs Gateway API, not Dashboard UI
+
+hermes-webui (nesquena/hermes-webui) connects to the Hermes **Gateway API** (port 8642 on Arch VM), not the Dashboard (port 19119). The Gateway API provides:
+- `/v1/chat/completions` — OpenAI-compatible chat
+- `/v1/models` — model list
+- WebSocket endpoints for real-time updates
+
+The Dashboard (port 19119) is a web management UI for config, sessions, memory — it does NOT provide the chat API.
+
+### hermes serve vs hermes proxy — Critical Distinction
+
+The Hermes CLI has several commands that look similar but provide completely different things:
+
+| Command | What it provides | OpenAI API (`/v1/chat/completions`)? |
+|---------|------------------|--------------------------------------|
+| `hermes dashboard` | Dashboard management UI (TCP port) | No |
+| `hermes serve` | Full Dashboard Web UI (SPA) + plugin routes | **No** — serves React SPA at all unmatched paths |
+| `hermes proxy start` | OpenAI-compatible HTTP proxy | **Yes** — but requires OAuth login to provider |
+| `hermes gateway start` | Messaging gateway (Telegram, Discord) | WebSocket-based, not HTTP REST |
+
+**Why hermes-webui can't use `hermes serve`**: The serve command runs a React SPA that catches all routes and returns HTML. It has `/api/ws` (WebSocket) and `/api/plugins/*` but NOT `/v1/chat/completions`. When hermes-webui sends requests to `/v1/models` or `/v1/chat/completions`, the SPA catch-all returns HTML instead of JSON.
+
+**For hermes-webui with local Hermes Agent on fnOS**:
+1. Hermes Agent must have API keys configured (via Dashboard at 19119)
+2. `hermes proxy start` provides the OpenAI-compatible API, but requires OAuth login (Nous Portal or xAI Grok)
+3. **Simplest**: Use remote Gateway mode — point hermes-webui to Arch VM's Gateway API at port 8642
+
+### fnOS Hermes Agent missing API keys
+
+The official Hermes Agent app on fnOS ships with NO API keys configured:
+```
+# OPENAI_API_KEY=*** (commented out)
+# OPENROUTER_API_KEY=*** (commented out)
+# ANTHROPIC_API_KEY=*** (commented out)
+```
+
+Without API keys, `hermes proxy start` fails with "not logged in" and `hermes dashboard` shows no models available. The user must configure keys through the Dashboard UI at port 19119 first.
+
+### hermes-home symlink for connecting WebUI to local Agent
+
+When WebUI needs to read agent state from a different location, create a symlink:
+```bash
+rm -rf /vol4/@appdata/HermesWebUI/hermes_home
+ln -sf /home/YangYu/.hermes /vol4/@appdata/HermesWebUI/hermes_home
+```
+
+This allows WebUI to read the agent's `state.db`, `config.yaml`, and other files from the native installation directory.
+
+### Gateway API server requires BOTH .env AND config.yaml
+
+On native Hermes Agent installations (not trim.hermes), enabling the API server requires configuration in **two places**:
+
+1. **`.env`** — sets the environment variables:
+```
+API_SERVER_ENABLED=true
+API_SERVER_HOST=127.0.0.1
+API_SERVER_PORT=18642
+API_SERVER_KEY=hermes-local-key
+```
+
+2. **`config.yaml`** — must have the `api_server:` section:
+```yaml
+api_server:
+  enabled: true
+  host: "127.0.0.1"
+  port: 18642
+```
+
+**Without config.yaml `api_server:` section**, the Gateway runs but does NOT listen on any port for the API server. The `hermes serve` command may appear to work but serves the Dashboard SPA (HTML) at all endpoints, NOT the OpenAI-compatible API.
+
+**Verification**: After starting the Gateway, check for the API server:
+```bash
+curl -sf http://127.0.0.1:18642/api/status  # Should return JSON, not HTML
+```
+
+If you get HTML or "Method Not Allowed", the API server is not properly configured.
+
+### hermes serve vs hermes proxy — Critical Distinction
+
+The Hermes CLI has several commands that look similar but provide completely different things:
+
+| Command | What it provides | OpenAI API (`/v1/chat/completions`)? |
+|---------|------------------|--------------------------------------|
+| `hermes dashboard` | Dashboard management UI (TCP port) | No |
+| `hermes serve` | Full Dashboard Web UI (SPA) + plugin routes | **No** — serves React SPA at all unmatched paths |
+| `hermes proxy start` | OpenAI-compatible HTTP proxy | **Yes** — but requires OAuth login to provider |
+| `hermes gateway start` | Messaging gateway (Telegram, Discord) | WebSocket-based, not HTTP REST |
+
+**Why hermes-webui can't use `hermes serve`**: The serve command runs a React SPA that catches all routes and returns HTML. It has `/api/ws` (WebSocket) and `/api/plugins/*` but NOT `/v1/chat/completions`. When hermes-webui sends requests to `/v1/models` or `/v1/chat/completions`, the SPA catch-all returns HTML instead of JSON.
+
+**For hermes-webui with local Hermes Agent on fnOS**:
+1. Hermes Agent must have API keys configured (via Dashboard at 19119)
+2. `hermes proxy start` provides the OpenAI-compatible API, but requires OAuth login (Nous Portal or xAI Grok)
+3. **Simplest**: Use remote Gateway mode — point hermes-webui to Arch VM's Gateway API at port 8642
+
+### Connection switching feature
+
+The WebUI has a connection switching feature at `/connection/` that allows switching between:
+- **Local kernel** — Auto-managed by WebUI
+- **Local connection** — Connect to running local Hermes (port 18642)
+- **Remote connection** — Connect to remote Gateway (default: 192.168.31.31:8642)
+
+Implementation files:
+- `api/connection.py` — API endpoints for config read/write/test
+- `static/connection/index.html` — UI page
+- Config stored in `/vol4/@appdata/HermesWebUI/gateway.env`
+
+## fnOS App Architecture Pattern
+
+The fnOS app provides **network access** to services, not the service runtime itself. The pattern:
+
+1. **WebUI fnOS app** → provides browser-accessible frontend (port 8787)
+2. **Hermes Agent** → runs locally on fnOS (installed separately via pip)
+3. **Gateway** → connects to API providers (DeepSeek, Xiaomi, etc.)
+
+The WebUI acts as a **thin client** connecting to the local Hermes Agent. This means:
+- The fnOS app doesn't need to bundle the agent runtime
+- The agent can be installed/updated independently
+- Multiple frontends can connect to the same agent
+
+## Native Hermes Agent Installation on fnOS
+
+Install Hermes Agent directly via pip (bypassing the official trim.hermes app restrictions):
+
+```bash
+# Create venv
+/usr/bin/python3 -m venv /home/YangYu/hermes-env
+
+# Install hermes-agent
+/home/YangYu/hermes-env/bin/pip install hermes-agent
+
+# Verify
+/home/YangYu/hermes-env/bin/hermes --version
+```
+
+**Required directories** (create and chmod 777):
+```bash
+mkdir -p /home/YangYu/.hermes/{logs,sessions,skills,memories,hooks,cron,pairing,audio_cache,image_cache,workspace}
+chmod -R 777 /home/YangYu/.hermes
+```
+
+**Configuration** (`/home/YangYu/.hermes/config.yaml`):
+```yaml
+model:
+  default: mimo-v2.5
+  provider: xiaomi
+  base_url: https://api.xiaomimimo.com/v1
+toolsets:
+  - hermes-cli
+agent:
+  max_turns: 50
+approvals:
+  mode: manual
+```
+
+**API key** (`/home/YangYu/.hermes/.env`):
+```
+XIAOMI_API_KEY=sk-xxxxx
+API_SERVER_ENABLED=true
+API_SERVER_HOST=127.0.0.1
+API_SERVER_PORT=18642
+```
+
+## Gateway Systemd Service Management
+
+The Hermes Gateway can run as a systemd user service:
+
+```bash
+# Install service
+hermes gateway install
+
+# Start/stop/restart
+hermes gateway start
+hermes gateway stop
+hermes gateway restart
+
+# Check status
+hermes gateway status
+
+# View logs
+journalctl --user -u hermes-gateway -f
+```
+
+**Important**: The gateway process intercepts `systemctl --user restart/stop` from within its own process tree. To restart, you must:
+1. SSH from a different machine
+2. Or `pkill -9 -f "hermes_cli.main gateway"` from a separate shell
+3. Or reboot the VM
+
+### Gateway API server requires BOTH .env AND config.yaml
+
+On native Hermes Agent installations (not trim.hermes), enabling the API server requires configuration in **two places**:
+
+1. **`.env`** — sets the environment variables:
+```
+API_SERVER_ENABLED=true
+API_SERVER_HOST=127.0.0.1
+API_SERVER_PORT=18642
+API_SERVER_KEY=
+```
+
+2. **`config.yaml`** — must have the `api_server:` section:
+```yaml
+api_server:
+  enabled: true
+  host: "127.0.0.1"
+  port: 18642
+```
+
+**Without config.yaml `api_server:` section**, the Gateway runs but does NOT listen on any port for the API server. The `hermes serve` command may appear to work but serves the Dashboard SPA (HTML) at all endpoints, NOT the OpenAI-compatible API.
+
+**Verification**: After starting the Gateway, check for the API server:
+```bash
+curl -sf http://127.0.0.1:18642/api/status  # Should return JSON, not HTML
+```
+
+If you get HTML or "Method Not Allowed", the API server is not properly configured.
+
+### fnOS Hermes Agent missing API keys
+

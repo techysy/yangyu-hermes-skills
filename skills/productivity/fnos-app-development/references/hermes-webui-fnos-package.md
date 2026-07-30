@@ -1,370 +1,210 @@
-# Hermes WebUI fnOS Package Guide
+# HermesWebUI fnOS Package Reference
 
-## Repository
+## Package History
 
-Source code and fnOS packaging for this project lives at:
-**https://github.com/techysy/hermes-webui-fnos**
+- **v0.1.0-v0.3.0**: Remote Gateway mode only (nesquena/hermes-webui)
+- **v0.4.0-v1.1.0**: Hybrid mode (local + remote kernel)
+- **v1.2.0-v1.3.0**: Fixed proxy and Gateway settings
 
-The `fnos-pack/` directory contains the complete fnOS application package:
-- `manifest` — app metadata
-- `cmd/main` — lifecycle script (start/stop/status)
-- `app/ui/config` — entry config
-- `config/privilege` — run-as: package
-- `config/resource` — data-share definition
+## Key Learnings
 
-To build: `cd fnos-pack && fnpack build`
+### Proxy Environment Variables Break Local Communication
 
-## Two Deployment Modes
+**Problem**: Setting `no_proxy="localhost,127.0.0.1,192.168.31.*"` doesn't work with Python's `requests` library. The wildcard `*` is not supported. Requests to `192.168.31.31:8642` get sent through the proxy, causing 501 errors or wrong HTTP method concatenation.
 
-### Mode A: Remote Gateway (lighter, no local agent)
+**Root cause**: Python's `requests` library uses `urllib3` which doesn't support shell-style wildcards in `no_proxy`.
 
-飞牛 NAS 上跑 Hermes WebUI 作为 fnOS 原生应用，连接到 Arch VM 或远程 Hermes Gateway。
+**Fix**: Either:
+1. `unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY no_proxy` before starting the WebUI (for local-network-only use)
+2. Use explicit IPs: `export no_proxy="localhost,127.0.0.1,192.168.31.101,192.168.31.31"`
 
-```
-fnOS (192.168.x.x)          Arch VM (192.168.x.x)
-┌──────────────────────┐      ┌──────────────────────┐
-│ fnOS App Center      │      │ Hermes Agent         │
-│  └─ HermesWebUI      │      │  └─ Gateway :9119    │
-│     ├─ :8787         │──▶   │                      │
-│     └─ hermes-webui  │      └──────────────────────┘
-│        (server.py)   │
-└──────────────────────┘
-```
+### cmd/main Must Be Finalized Before Building fpk
 
-Requires `HERMES_WEBUI_CHAT_BACKEND=gateway` and `HERMES_WEBUI_GATEWAY_BASE_URL`.
-No local Hermes Agent install needed.
+After `fnpack build` and installation, `/var/apps/{appname}/cmd/` directory and files are owned by **root**. You cannot modify cmd/main from the yangyu user without sudo.
 
-### Mode B: Bundled Agent (self-contained, heavier)
-
-Hermes Agent installed in the app's venv at install time. WebUI connects to local `127.0.0.1:9119` Gateway.
-
-```
-fnOS (192.168.x.x)
-┌─────────────────────────────┐
-│ fnOS App Center             │
-│  └─ HermesWebUI             │
-│     ├─ venv/hermes          │
-│     │   └─ dashboard :9119  │
-│     ├─ :8787                │
-│     └─ hermes-webui         │
-│        (server.py)          │
-└─────────────────────────────┘
-```
-
-Heavier install (~50+ pip deps) but no external dependency.
-
-## Gateway Detection (cmd/main, Remote Mode)
-
+**Implication**: All cmd/main logic must be finalized BEFORE building the fpk. If you need to change cmd/main after install, ask the user to manually run:
 ```bash
-detect_gateway() {
-  if curl -sf --max-time 2 "http://127.0.0.1:9119/api/health" > /dev/null 2>&1; then
-    echo "http://127.0.0.1:9119"       # local Hermes Agent
-  else
-    echo "http://192.168.x.x:9119"    # remote Arch VM Gateway
-  fi
-}
+cat /tmp/main_new.sh | sudo tee /var/apps/{appname}/cmd/main > /dev/null
+sudo chmod 755 /var/apps/{appname}/cmd/main
 ```
 
-## Key Debug Commands (on fnOS)
+### WebUI Doesn't Read .env Files
 
+hermes-webui's `server.py` reads from **process environment variables only** — it does NOT use `python-dotenv` or read `.env` files. Creating a `.env` file in the project directory or HERMES_HOME won't work. All settings must be passed via `export` in `cmd/main` before starting the server.
+
+### Gateway API Server vs Dashboard
+
+These are separate services:
+- **Gateway API server** (port 8642): Exposes OpenAI-compatible endpoints for chat
+- **Dashboard** (port 9119): Serves the management UI
+
+WebUI needs BOTH for full functionality. Enable Gateway API via env vars in systemd drop-in:
+```
+API_SERVER_ENABLED=true
+API_SERVER_KEY=<key>
+API_SERVER_PORT=8642
+API_SERVER_HOST=0.0.0.0
+```
+
+### Skills Sync from Remote
+
+When rsync isn't available, use `tar` over SSH:
 ```bash
-# fnOS lifecycle log (install/cmd/main output)
-cat /var/log/apps/HermesWebUI.log
-
-# webui server startup log
-cat /vol4/@appdata/HermesWebUI/webui.log
-
-# check listening port
-ss -tlnp | grep 8787
-
-# source presence (always under target/)
-ls -la /var/apps/HermesWebUI/target/server/server.py
-
-# check actual app dir symlinks
-ls -la /var/apps/HermesWebUI/target
-
-# appcenter errors
-sudo cat /var/log/trim_app_center/error.log 2>/dev/null || echo "need sudo"
+tar czf - -C /home/yangyu/.hermes skills/ | ssh yangyu@192.168.31.101 "tar xzf - -C /vol4/@appdata/HermesWebUI/hermes_home"
 ```
 
-## Build and Deploy Cycle
+Set up a cron job to run this every 5 minutes for automatic sync.
 
-1. Edit files in build dir on Arch VM (e.g. `/tmp/HermesWebUI-build/HermesWebUI/`)
-2. `scp` updated files to fnOS or write them via `ssh`
-3. `fnpack build` to produce `HermesWebUI.fpk`
-4. `cp HermesWebUI.fpk /vol4/1000/SSD/HermesWebUI-v0.1.0.fpk`
-5. On fnOS Web UI: App Center → Manual Install → select file
-6. To UPDATE: just install the new `.fpk` — fnOS detects the version bump and upgrades
-
-Version naming: `HermesWebUI-v{major}.{minor}.{patch}.fpk`
-
-## What Worked (Proven Approach)
-
-1. **Start with `fnpack create` template** — don't build from scratch. Then modify manifest, swap cmd/main, replace icons.
-2. **Bundle source in `app/server/`** — avoid network dependency at install time. install_init should be a no-op.
-3. **Use `TRIM_*` env vars** — `TRIM_APPDEST`, `TRIM_PKGVAR`, `TRIM_PKGETC`. Never hardcode paths.
-4. **Run server.py directly** — bootstrap.py needs local Hermes Agent. Pass `HERMES_WEBUI_DISABLE_AGENT_CHECK=1` and run `server.py`.
-5. **Use `type: \"url\"` for debugging** — iframe type may fail behind fygo-browser. Switch to iframe only after confirming the service starts.
-6. **For bundled-agent mode**: install hermes-agent in `install_callback` (not at startup). `pip install hermes-agent` takes a while (~30-60s on fnOS).
-7. **For remote mode**: must set `HERMES_WEBUI_CHAT_BACKEND=gateway` or WebUI defaults to legacy mode and fails.
-
-## Common Issues
-
-### Bootstrapping: "Hermes Agent was not found and auto-install was disabled"
-
-bootstrap.py is NOT suitable for headless/remote-Gateway deployments. Fix: bypass bootstrap.py and run server.py directly:
-
-```bash
-export HERMES_API_URL="http://192.168.x.x:9119"
-export HERMES_WEBUI_HOST="0.0.0.0"
-export HERMES_WEBUI_PORT="8787"
-export HERMES_WEBUI_STATE_DIR="${DATA_DIR}/state"
-export HERMES_WEBUI_SKIP_ONBOARDING=1
-export HERMES_WEBUI_DISABLE_AGENT_CHECK=1
-# Gateway chat mode — REQUIRED for remote Gateway setup
-export HERMES_WEBUI_CHAT_BACKEND=gateway
-export HERMES_WEBUI_GATEWAY_BASE_URL="${GATEWAY_URL}"
-export GATEWAY_HEALTH_URL="${GATEWAY_URL}/api/health"
-# server.py also reads these as fallbacks
-export HOST="0.0.0.0"
-export PORT="8787"
-
-cd "${SRC_DIR}"
-python server.py
-```
-
-### "拒绝了我们的连接请求"
-
-Two possible causes:
-
-**A) Server process didn't start** — check:
-1. Source exists at `$TRIM_APPDEST/target/server/server.py`
-2. cmd/main uses correct path (`target/server` not `server`)
-3. venv + deps installed (pyyaml, cryptography)
-
-**B) Server started but iframe blocked** — check:
-1. `curl http://127.0.0.1:8787/health` — if ok, server is running
-2. `curl http://192.168.x.x:8787/health` — if ok, network is fine
-3. Try `type: "url"` instead of `type: "iframe"` in app/ui/config
-4. Open `http://192.168.x.x:8787` directly in fnOS Chrome
-
-### "执行脚本出错且原因未知"
-
-Install script failed. Check `/var/log/apps/HermesWebUI.log` for exact error.
-Common cause: network timeout downloading source from GitHub.
-Fix: bundle source in `app/server/` at build time, make install_init a no-op.
-
-### "应用包格式不符合系统版本要求"
-
-fpk rejected by fnOS. Always diff against a `fnpack create` template:
-1. Run `fnpack create TestApp` on the same fnOS machine
-2. `fnpack build` and install TestApp.fpk — if it installs, the format is fine
-3. Diff your manifest, config/privilege, config/resource with the template
-4. Extract both fpk files (`tar xf`) and inspect `app.tgz` content
-
-## History of Iterations
-
-| Version | Changes |
-|---------|---------|
-| v1-v3   | Initial fpk attempts — "格式不符合系统版本" |
-| v4      | Fixed manifest format (added arch/distributor) — installed |
-| v5      | Added install_init to download source — timed out |
-| v6      | Fixed bootstrap.py `--port` → positional arg — agent missing |
-| v7      | Bundled source in `app/server/` (22MB) |
-| v8      | Hardcoded APP_DIR path — wrong dir |
-| v9      | Used TRIM_* env vars — server/ was in `target/` not root |
-| v10     | Fixed to `target/server` — bootstrap required local agent |
-| v11     | Run server.py directly instead of bootstrap.py — WORKED 🎉 |
-| v0.1.0  | Stable release, version normalized |
-| v0.1.1  | Default settings.json (theme: dark, skin: default) |
-| v0.1.2  | Default skin: codex |
-| v0.1.3  | Default language: zh |
-| v0.1.4  | HERMES_WEBUI_CHAT_BACKEND=gateway for remote Gateway |
-| v0.1.5  | Default theme: system (follow system) + codex skin |
-| v1.0.0  | Bundled Hermes Agent mode (local dashboard + gateway) |
-| v1.0.1  | Moved hermes-agent install to install_callback |
-| v0.2.0  | Stripped to pure-remote mode (no bundled agent). Lighter, faster startup. |
-| v1.0.2  | Type: url instead of iframe (fixes "拒绝连接" in fygo-browser) |
-| v0.3.0  | Gateway mode with API key. `HERMES_WEBUI_CHAT_BACKEND=gateway` + `HERMES_WEBUI_GATEWAY_API_KEY` + `HERMES_WEBUI_GATEWAY_BASE_URL`. Arch VM API server on 8642. |
-
-## Gateway API Server Setup
-
-When deploying hermes-webui with `HERMES_WEBUI_CHAT_BACKEND=gateway`, the Arch VM's Gateway needs its `api_server` platform enabled.
-
-### Configuration (Arch VM)
-
-Drop-in file at `/home/your_user/.config/systemd/user/hermes-gateway.service.d/api-server.conf`:
-```
-[Service]
-Environment="API_SERVER_ENABLED=true"
-Environment="API_SERVER_KEY=webui-gateway-key-2026"
-Environment="API_SERVER_PORT=8642"
-Environment="API_SERVER_HOST=0.0.0.0"
-```
-
-**⚠️ CRITICAL**: The `API_SERVER_KEY` must be present. Without it, the API server refuses with:
-```
-ERROR gateway.platforms.api_server: [Api_Server] Refusing to start:
-API_SERVER_KEY is required for the API server, including loopback-only binds on 0.0.0.0.
-```
-
-The WebUI side must match with `HERMES_WEBUI_GATEWAY_API_KEY=webui-gateway-key-2026`.
-
-### Restart Safety Feature (Blocked from Within)
-
-The Hermes Gateway (#30719) intercepts ANY stop/restart command from within its own process tree:
-
-| Method | Works? |
-|--------|--------|
-| `systemctl --user restart` (inside gateway) | ❌ |
-| `systemd-run --user --scope systemctl --user kill` | ❌ |
-| `ssh yangyu@127.0.0.1` | ❌ |
-| `ssh yangyu@192.168.x.x` (local loopback) | ❌ |
-| `hermes gateway restart` | ❌ |
-| `cronjob` (also runs inside gateway tree) | ❌ |
-| `execute_code` with `subprocess.run()` | ❌ |
-| `xfce4-terminal -e` from background true | ❌ |
-| SSH from a **different LAN machine** | ✅ |
-| Manual terminal on desktop (outside Hermes) | ✅ |
-| Reboot the VM | ✅ |
-
-**Workaround**: Ask the user to run `systemctl --user restart hermes-gateway.service` from their desktop terminal, or SSH from a different machine on the LAN.
-
-### Verification
-
-```bash
-# Check API server is listening
-ss -tlnp | grep 8642
-
-# Health check
-curl -sf http://127.0.0.1:8642/health
-# Expected: {"status": "ok", "platform": "hermes-agent", "version": "0.19.0"}
-
-# Check Gateway has loaded the drop-in
-systemctl --user show hermes-gateway.service -p Environment
-# Should show API_SERVER_KEY in output
-```
-
-### WebUI Side Configuration
-
-```bash
-export HERMES_WEBUI_CHAT_BACKEND=gateway
-export HERMES_WEBUI_GATEWAY_BASE_URL="http://192.168.x.x:8642"
-export HERMES_WEBUI_GATEWAY_API_KEY="webui-gateway-key-2026"
-export HERMES_API_URL="http://192.168.x.x:9119"
-```
-
-The Dashboard (`HERMES_API_URL` at 9119) provides REST API; the Gateway (`GATEWAY_BASE_URL` at 8642) provides chat backend. Both are needed.
-
-### For the fnOS app specifically:
-
-The most reliable approach is Mode B (bundled agent). Install hermes-agent in install_callback, start dashboard + webui at each boot, no remote dependency at all. Install takes 30-60s for pip install; subsequent boots are fast (venv already exists).
-
-## SSH Skills Sync
-
-When skills/settings don't sync from Arch VM to fnOS, set up SSH key-based periodic sync.
-
-See `references/ssh-skills-sync.md` for full setup guide.
-
-## CGI Redirect for External Dashboard Access
-
-fnOS app entries cannot link to external IPs directly. When the user wants an app icon that opens an external Dashboard (e.g. `http://192.168.x.x:9119/`), use a CGI redirect.
-
-### Create app/ui/index.cgi
+## cmd/main Template (v1.3.0)
 
 ```bash
 #!/bin/bash
-echo "Status: 302"
-echo "Location: http://192.168.x.x:9119/"
-echo "Content-Type: text/html"
-echo ""
-echo "<html><body><a href='http://192.168.x.x:9119/'>Redirect</a></body></html>"
-```
+set -euo pipefail
+APP_NAME="${TRIM_APPNAME:-HermesWebUI}"
+APP_DIR="${TRIM_APPDEST:-/var/apps/${APP_NAME}}"
+DATA_DIR="${TRIM_PKGVAR:-${APP_DIR}/var}"
+WEBUI_PORT=8787
+WEBUI_SRC="${APP_DIR}/target/server"
+WEBUI_LOG="${DATA_DIR}/webui.log"
+WEBUI_PID="${DATA_DIR}/webui.pid"
+WEBUI_VENV="${DATA_DIR}/venv"
+WEBUI_STATE="${DATA_DIR}/state"
+HERMES_HOME="${DATA_DIR}/hermes_home"
 
-### Update app/ui/config
+# Read config from gateway.env
+CONFIG_FILE="${DATA_DIR}/gateway.env"
+[ -f "${CONFIG_FILE}" ] && source "${CONFIG_FILE}"
+REMOTE_GATEWAY="${GATEWAY_URL:-http://192.168.31.31:8642}"
+REMOTE_DASHBOARD="${DASHBOARD_URL:-http://192.168.31.31:9119}"
+REMOTE_KEY="${GATEWAY_KEY:-webui-gateway-key-2026}"
+USE_PROXY_FLAG="${USE_PROXY:-true}"
+PROXY_URL="${PROXY_URL:-http://192.168.31.31:7890}"
 
-```json
-{
-  ".url": {
-    "HermesWebUI.Application": {
-      "title": "Hermes Agent",
-      "icon": "images/icon_{0}.png",
-      "type": "iframe",
-      "protocol": "http",
-      "port": "8080",
-      "url": "/cgi/ThirdParty/HermesWebUI/index.cgi/",
-      "allUsers": true
-    }
-  }
+mkdir -p "${DATA_DIR}" "${WEBUI_STATE}" "${HERMES_HOME}"
+[ ! -f "${WEBUI_STATE}/settings.json" ] && echo '{"theme":"light","skin":"codex","language":"zh"}' > "${WEBUI_STATE}/settings.json"
+
+log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "${WEBUI_LOG}"; }
+
+ensure_venv() {
+  [ -f "${WEBUI_VENV}/bin/python" ] && return 0
+  /usr/bin/python3 -m venv "${WEBUI_VENV}"
+  "${WEBUI_VENV}/bin/pip" install pyyaml cryptography >> "${WEBUI_LOG}" 2>&1
 }
+
+start_webui() {
+  [ -f "${WEBUI_PID}" ] && kill -0 "$(cat "${WEBUI_PID}")" 2>/dev/null && return 0
+  ensure_venv
+  [ ! -f "${WEBUI_SRC}/server.py" ] && log "ERROR: source missing" && return 1
+
+  # Unset proxy for local network communication
+  unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY no_proxy
+
+  export HERMES_HOME="${HERMES_HOME}"
+  export HERMES_API_URL="${REMOTE_DASHBOARD}"
+  export HERMES_WEBUI_CHAT_BACKEND=gateway
+  export HERMES_WEBUI_GATEWAY_BASE_URL="${REMOTE_GATEWAY}"
+  export HERMES_WEBUI_GATEWAY_API_KEY="${REMOTE_KEY}"
+  export HERMES_WEBUI_HOST="0.0.0.0"
+  export HERMES_WEBUI_PORT="${WEBUI_PORT}"
+  export HERMES_WEBUI_STATE_DIR="${WEBUI_STATE}"
+  export HERMES_WEBUI_SKIP_ONBOARDING=1
+  export HERMES_WEBUI_DISABLE_AGENT_CHECK=1
+  export HOST="0.0.0.0"
+  export PORT="${WEBUI_PORT}"
+
+  cd "${WEBUI_SRC}"
+  nohup "${WEBUI_VENV}/bin/python" server.py >> "${WEBUI_LOG}" 2>&1 &
+  echo $! > "${WEBUI_PID}"
+
+  for i in $(seq 1 30); do
+    curl -sf "http://127.0.0.1:${WEBUI_PORT}/health" >/dev/null 2>&1 && log "WebUI started (PID $(cat ${WEBUI_PID}))" && return 0
+    sleep 1
+  done
+  log "WebUI start timeout"
+}
+
+stop() {
+  [ -f "${WEBUI_PID}" ] || return 0
+  PID=$(cat "${WEBUI_PID}")
+  kill "${PID}" 2>/dev/null || true
+  for i in 1 2 3; do kill -0 "${PID}" 2>/dev/null || { rm -f "${WEBUI_PID}"; log "Stopped"; return 0; }; sleep 1; done
+  kill -9 "${PID}" 2>/dev/null || true
+  rm -f "${WEBUI_PID}"
+  log "Force stopped"
+}
+
+status() {
+  [ -f "${WEBUI_PID}" ] && kill -0 "$(cat "${WEBUI_PID}")" 2>/dev/null && echo "running" || echo "stopped"
+}
+
+case "${1:-start}" in
+  start) start_webui ;;
+  stop) stop ;;
+  status) status ;;
+  restart) stop; sleep 2; start_webui ;;
+  *) echo "Usage: $0 {start|stop|status|restart}"; exit 1 ;;
+esac
 ```
 
-The `protocol` and `port` are ignored for CGI routes — the request flows through the fnOS web server domain. The browser follows the 302 redirect to the external target URL.
+## Hermes Agent on fnOS (trim.hermes)
 
-## Common Issue: fnOS App Center Shows "拒绝连接" After Update
+The official Hermes Agent app on fnOS uses a two-process architecture:
 
-When updating the fnOS app (even with `type: "url"`), if the old WebUI server process is still running on the previous port, the new app config may conflict. Fix:
+### Wrapper (Go binary)
+- **Location**: `/var/apps/trim.hermes/wrapper/trim-hermes-wrapper`
+- **Listens on**: Unix socket (`/var/apps/trim.hermes/run/trim-hermes.sock`)
+- **Purpose**: Manages the Python runtime lifecycle
+- **Process name**: `trim-hermes-wrapper`
 
-1. Kill the old process: `pkill -f server.py`
-2. If the source server was removed (switching to CGI redirect only), no backend process is needed
-3. The app icon now opens a browser tab → CGI → 302 redirect → Dashboard
+### Python Dashboard
+- **Location**: `/vol4/@appcenter/trim.hermes/runtime/python/bin/hermes`
+- **Listens on**: TCP port `19119` (configurable via `TRIM_HERMES_DASHBOARD_PORT`)
+- **Start command**: `hermes dashboard --host 127.0.0.1 --port 19119 --no-open`
+- **Process name**: `python3.11.real -m hermes_cli.main`
 
-### Symptom
+### Key Differences from Standard Hermes
+1. The wrapper does NOT automatically start the Python dashboard
+2. The wrapper listens on a Unix socket, not TCP
+3. The dashboard must be started separately after the wrapper is running
+4. The wrapper may appear to be running (PID exists) but the dashboard isn't listening
 
-Chat works fine, but the Skills page, Settings page, and other management sections in the WebUI show no data (empty lists or default values). The `/api/skills` endpoint returns 200 almost instantly (~0.3ms) with an empty list.
-
-### Root Cause
-
-In Remote Gateway Mode, the WebUI has a **split architecture**:
-
-- **Chat** → proxied through Gateway wire to remote Hermes Agent ✅
-- **Skills/Settings** → served by WebUI's own API layer (`api/routes.py` / `api/config.py`) reading from the **local filesystem on the NAS** ❌
-
-The WebUI creates its own `hermes_home` directory on the NAS (e.g. `/vol4/@appdata/HermesWebUI/hermes_home/`) with a separate `config.yaml`, `.env`, an **empty `skills/` directory**, and its own `state.db`. The Skills and Settings pages read from this local directory, NOT from the remote Gateway's Hermes Agent.
-
-Relevant code path in the WebUI (`api/routes.py`):
-```python
-# GET /api/skills reads from local fs
-skills_dir = get_active_hermes_home() / "skills"
-data = _skills_list_from_dir(skills_dir)  # empty on NAS!
-```
-
-### Diagnosis
+### How to Start the Dashboard Manually
 
 ```bash
-# On the NAS, check the WebUI's hermes_home
-ls /vol4/@appdata/HermesWebUI/hermes_home/skills/         # empty or missing
-cat /vol4/@appdata/HermesWebUI/hermes_home/config.yaml     # tiny, separate config
-
-# Check if dashboard URL is misconfigured
-grep dashboard /vol4/@appdata/HermesWebUI/hermes_home/config.yaml
-# May show wrong port like :9191 instead of :9119
-
-# Check webui.log for skills/settings API timing
-cat /vol4/@appdata/HermesWebUI/webui.log | grep 'api/skills\|api/settings'
-# Skills: 0.3ms → local response, not proxied
+# From the Hermes Agent data directory
+cd /vol4/@appdata/trim.hermes
+export HOME=/vol4/@appdata/trim.hermes/home
+export HERMES_HOME=/vol4/@appdata/trim.hermes/hermes
+/vol4/@appcenter/trim.hermes/runtime/python/bin/hermes dashboard --host 127.0.0.1 --port 19119 --no-open
 ```
 
-### Workarounds
+### Configuration Files
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| **A) Sync skills to NAS** | Simple, keeps WebUI unified | Stale data, manual sync |
-| **B) Use Dashboard directly** | Full management, real-time | Need to switch UIs |
-| **C) Bundled Agent Mode** | Self-contained, everything local | Heavier install, more RAM |
+- **PID file**: `/vol4/@appdata/trim.hermes/trim.hermes.pid`
+- **Log file**: `/vol4/@appdata/trim.hermes/trim.hermes.log`
+- **Config**: `/vol4/@appdata/trim.hermes/hermes/config.yaml` (created on first dashboard start)
+- **State**: `/vol4/@appdata/trim.hermes/hermes/state.db`
 
-**Workaround A — Sync skills via cron (tar+ssh when rsync unavailable):**
-See `references/ssh-skills-sync.md` for complete setup guide (SSH key gen, one-time key push, cron creation).
+### Connecting WebUI to Local Hermes Agent
+
+When using HermesWebUI with the local Hermes Agent:
 
 ```bash
-# Manual one-shot sync from Arch VM:
-tar czf - -C /home/your_user/.hermes skills/ | \
-  ssh yangyu@192.168.x.x \
-  "tar xzf - -C /vol4/@appdata/HermesWebUI/hermes_home"
+# gateway.env
+USE_REMOTE_GATEWAY="false"
+DASHBOARD_URL="http://127.0.0.1:19119"
+GATEWAY_URL="http://127.0.0.1:19119"
+GATEWAY_KEY=""
+USE_PROXY="false"
+PROXY_URL=""
 ```
 
-**Workaround B — Use Dashboard for management:**
-Access the Hermes Dashboard directly (e.g. http://192.168.x.x:9119) for skills/settings management. Keep WebUI for chat.
+### Common Issues
 
-**Workaround C — Upgrade to Bundled Agent:**
-Install hermes-agent locally on the NAS during install_callback, set `HERMES_API_URL=http://127.0.0.1:9119`, and `HERMES_WEBUI_CHAT_BACKEND=gateway` pointing to the local dashboard. Full skills/settings support at the cost of ~50+ pip deps and extra RAM.
+1. **Wrapper running but no port listening**: The wrapper starts but doesn't automatically spawn the Python dashboard. Need to start dashboard manually or configure the wrapper to do so.
+
+2. **PID file exists but process is dead**: The wrapper may crash without cleaning up the PID file. Check with `ps -p <PID>` and remove stale PID files.
+
+3. **Dashboard returns 401 Unauthorized**: The dashboard needs authentication. For local use, this is usually handled by the wrapper's Unix socket communication.
+
+4. **Port conflict**: If another service is using port 19119, the dashboard won't start. Check with `ss -tlnp | grep 19119`.
