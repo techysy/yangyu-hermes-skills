@@ -168,6 +168,8 @@ hermes config set hermes_lark_streaming.usd_to_cny_rate 7.2
 
 注意：内置表原 deepseek-v4-pro 的 `$1.74/$3.48` 是 2026-05-12 旧快照，已更新为官方最新价。
 
+**TTS/语音（2026-07-31）**：小米 `mimo-v2.5-tts`、`mimo-v2.5-tts-voiceclone`、`mimo-v2.5-tts-voicedesign` **限时免费**。Hermes TTS 工具不做费用追踪（仅 LLM chat 计费），无需配定价表；STT 已配 `mimo-v2.5-asr`（走 xiaomi API），TTS 默认 edge（免费）。
+
 ---
 
 ## 4. 会话与话题
