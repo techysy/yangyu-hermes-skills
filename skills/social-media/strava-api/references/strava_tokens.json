@@ -1,5 +1,0 @@
-{
-  "access_token": "YOUR_ACCESS_TOKEN",
-  "refresh_token": "YOUR_REFRESH_TOKEN",
-  "scope": "activity:read_all read"
-}

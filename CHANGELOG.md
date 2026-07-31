@@ -4,8 +4,14 @@
 
 ## 2026-08-01
 
+### 新增 / Added
+- **feishu-markdown** — 修复飞书 Markdown 渲染问题（表格、粗体、代码块）/ Fix Feishu markdown rendering (tables, bold, code blocks)
+
 ### 迁移 / Moved
-- **fnos-app-development** — 移至独立私有仓库 [techysy/fnos-app-dev-skill](https://github.com/techysy/fnos-app-dev-skill)，包含完整踩坑记录（TRIM_APPDEST 差异、Next.js standalone 打包、静态文件打包、SSH 进程清理等） / Moved to private repo [techysy/fnos-app-dev-skill](https://github.com/techysy/fnos-app-dev-skill) with full development notes
+- **fnos-app-development** — 移至独立私有仓库 [techysy/fnos-app-dev-skill](https://github.com/techysy/fnos-app-dev-skill) / Moved to private repo
+
+### 清理 / Cleanup
+- **strava-api** — 移除内部引用（credentials、router-bypass、secret-redaction、dns-fix、tokens）/ Removed internal references (credentials, router-bypass, secret-redaction, dns-fix, tokens)
 
 ## 2026-07-31
 
