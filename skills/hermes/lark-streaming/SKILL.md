@@ -12,9 +12,10 @@ metadata:
 
 # hermes-lark-streaming 安装指南
 
-飞书/Lark CardKit v2.0 流式卡片插件 — 实时 AI 回复显示，打字效果，统一折叠面板，推理/工具按时间线展示。
-
+> 📦 **应用来源**：[Aowen-Nowor/hermes-lark-streaming](https://gitee.com/Aowen-Nowor/hermes-lark-streaming) v1.6.0 · License: MIT
 > 基于 [Cheerwhy/hermes-lark-streaming](https://github.com/Cheerwhy/hermes-lark-streaming) v0.7.0 重构优化
+
+飞书/Lark CardKit v2.0 流式卡片插件 — 实时 AI 回复显示，打字效果，统一折叠面板，推理/工具按时间线展示。
 
 ## 前置条件
 
