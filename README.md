@@ -62,3 +62,10 @@ hermes skills install outdoor-trip-planner --repo techysy/yangyu-skills-hub
 
 欢迎提交 [PR](https://github.com/techysy/yangyu-skills-hub/pulls) 或 [Issue](https://github.com/techysy/yangyu-skills-hub/issues)！
 PRs and Issues are welcome!
+
+---
+
+## 🐛 问题排查 / Troubleshooting
+
+日常使用 Hermes Agent 遇到的坑与解决方案：[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+Pitfalls & fixes from daily Hermes usage: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
