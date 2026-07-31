@@ -176,7 +176,8 @@ hermes config set hermes_lark_streaming.usd_to_cny_rate 7.2
 - 音色：`mimo_default, 冰糖, 茉莉, 苏打, 白桦, Mia, Chloe, Milo, Dean`
 - 接入方式：Hermes `tts.providers.mimo` command provider + `~/.hermes/scripts/mimo_tts.py`
 - **Telegram 语音气泡坑**：必须 **Opus 编码** ogg（`-c:a libopus -ar 48000 -ac 1`），ffmpeg 默认转出的 **Vorbis** ogg 播放速度会异常（快进）。验证：`file x.ogg` 应显示 `Opus audio` 而非 `Vorbis audio`
-- 渠道支持：Telegram✅ 语音气泡、飞书✅ 音频消息、微信❌ 只用文字
+- **`[[audio_as_voice]]` 指令**：Telegram 对 .ogg 默认当普通附件发送（防音乐误判），消息必须带 `[[audio_as_voice]]` 指令才会走语音气泡：`hermes send --to telegram "[[audio_as_voice]] MEDIA:/path/x.ogg"`。TTS 工具返回的 MEDIA: 自带该指令
+- 渠道支持：Telegram✅ 语音气泡（需 `[[audio_as_voice]]` + Opus ogg）、飞书✅ 音频消息（ogg 直接可播）、微信❌ 只用文字
 
 ---
 
