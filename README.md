@@ -4,57 +4,42 @@
 > YangYu's Hermes Agent Skills Hub
 
 [![GitHub](https://img.shields.io/badge/GitHub-yangyu--skills--hub-blue)](https://github.com/techysy/yangyu-skills-hub)
+[![Skills](https://img.shields.io/badge/skills-4-green.svg)](#-技能列表)
 
 ---
 
 ## 📦 安装 / Install
 
-**中文**
-
 ```bash
-# 从本仓库安装
-hermes skills install feishu-table-render --repo techysy/yangyu-skills-hub
-hermes skills install strava-api --repo techysy/yangyu-skills-hub
-hermes skills install fnos-app-development --repo techysy/yangyu-skills-hub
-hermes skills install outdoor-trip-planner --repo techysy/yangyu-skills-hub
+hermes skills install <skill-name> --repo techysy/yangyu-skills-hub
+# 无需注册，指定 --repo 即可直装 / No registration needed
 ```
 
-> 无需注册，指定 `--repo` 即可直装 🚀
-
-**English**
-
+**示例 / Examples:**
 ```bash
-# Install from this repo
 hermes skills install feishu-table-render --repo techysy/yangyu-skills-hub
+hermes skills install feishu-markdown --repo techysy/yangyu-skills-hub
 hermes skills install strava-api --repo techysy/yangyu-skills-hub
-hermes skills install fnos-app-development --repo techysy/yangyu-skills-hub
 hermes skills install outdoor-trip-planner --repo techysy/yangyu-skills-hub
 ```
-
-> No registration needed — just `--repo` to install directly 🚀
 
 ---
 
 ## 🛠️ 技能列表 / Skills
 
-| 技能 / Skill | 分类 / Category | 说明 / Description |
-|:------------|:---------------|:-------------------|
-| feishu-table-render | 📄 productivity | 修复飞书 Markdown 表格渲染 / Fix Feishu table rendering |
-| fnos-app-development | 📦 productivity | 飞牛 NAS 应用开发指南 / fnOS app development guide |
-| strava-api | 🚴 social-media | Strava 骑行/活动查询 / Strava ride & activity query |
-| outdoor-trip-planner | 🏔️ cycling | 户外出行规划（天气/高铁/路线）/ Outdoor trip planner |
+| Skill | Category | Description |
+|:------|:---------|:------------|
+| `feishu-table-render` | 📄 productivity | 修复飞书 Markdown 表格渲染 / Fix Feishu table rendering |
+| `feishu-markdown` | 📄 productivity | 修复飞书 Markdown 渲染（表格/粗体/代码块）/ Fix Feishu markdown rendering |
+| `strava-api` | 🚴 social-media | Strava 骑行/活动查询 / Strava ride & activity query |
+| `outdoor-trip-planner` | 🏔️ cycling | 户外出行规划（天气/高铁/路线）/ Outdoor trip planner |
 
 ---
 
 ## 📋 前置依赖 / Prerequisites
 
-**中文**
 - `outdoor-trip-planner` 需要安装第三方 [12306 skill](https://github.com/techysy/yangyu-skills-hub) — `hermes skills install 12306`
-- `strava-api` 需要配置 Strava API 凭据
-
-**English**
-- `outdoor-trip-planner` requires the third-party [12306 skill](https://github.com/techysy/yangyu-skills-hub) — `hermes skills install 12306`
-- `strava-api` needs Strava API credentials configured
+- `strava-api` 需要配置 Strava API 凭据 / needs Strava API credentials configured
 
 ---
 
