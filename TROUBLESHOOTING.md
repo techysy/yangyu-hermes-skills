@@ -170,6 +170,14 @@ hermes config set hermes_lark_streaming.usd_to_cny_rate 7.2
 
 **TTS/语音（2026-07-31）**：小米 `mimo-v2.5-tts`、`mimo-v2.5-tts-voiceclone`、`mimo-v2.5-tts-voicedesign` **限时免费**。Hermes TTS 工具不做费用追踪（仅 LLM chat 计费），无需配定价表；STT 已配 `mimo-v2.5-asr`（走 xiaomi API），TTS 默认 edge（免费）。
 
+**小米 TTS 接入要点（2026-07-31）：**
+- API 是 **chat/completions + audio modality**，不是 OpenAI 标准 `/audio/speech` 端点（404）。文本必须放 `role: assistant` 的 content，user 可放风格指令
+- 支持格式：`wav/mp3/pcm/pcm16`，**不支持 ogg**
+- 音色：`mimo_default, 冰糖, 茉莉, 苏打, 白桦, Mia, Chloe, Milo, Dean`
+- 接入方式：Hermes `tts.providers.mimo` command provider + `~/.hermes/scripts/mimo_tts.py`
+- **Telegram 语音气泡坑**：必须 **Opus 编码** ogg（`-c:a libopus -ar 48000 -ac 1`），ffmpeg 默认转出的 **Vorbis** ogg 播放速度会异常（快进）。验证：`file x.ogg` 应显示 `Opus audio` 而非 `Vorbis audio`
+- 渠道支持：Telegram✅ 语音气泡、飞书✅ 音频消息、微信❌ 只用文字
+
 ---
 
 ## 4. 会话与话题
