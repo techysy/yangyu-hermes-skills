@@ -19,6 +19,7 @@ hermes skills install <skill-name> --repo techysy/yangyu-skills-hub
 ```bash
 hermes skills install feishu-table-render --repo techysy/yangyu-skills-hub
 hermes skills install feishu-markdown --repo techysy/yangyu-skills-hub
+hermes skills install lark-streaming --repo techysy/yangyu-skills-hub
 hermes skills install strava-api --repo techysy/yangyu-skills-hub
 hermes skills install outdoor-trip-planner --repo techysy/yangyu-skills-hub
 ```
@@ -31,6 +32,7 @@ hermes skills install outdoor-trip-planner --repo techysy/yangyu-skills-hub
 |:------|:---------|:------------|
 | `feishu-table-render` | 📄 productivity | 修复飞书 Markdown 表格渲染 / Fix Feishu table rendering |
 | `feishu-markdown` | 📄 productivity | 修复飞书 Markdown 渲染（表格/粗体/代码块）/ Fix Feishu markdown rendering |
+| `lark-streaming` | 🔌 hermes | 飞书流式卡片插件安装指南 / Feishu streaming cards plugin install guide |
 | `strava-api` | 🚴 social-media | Strava 骑行/活动查询 / Strava ride & activity query |
 | `outdoor-trip-planner` | 🏔️ cycling | 户外出行规划（天气/高铁/路线）/ Outdoor trip planner |
 

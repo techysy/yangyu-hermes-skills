@@ -5,6 +5,7 @@
 ## 2026-08-01
 
 ### 新增 / Added
+- **lark-streaming** — 飞书流式卡片插件安装指南（hermes-lark-streaming v1.6.0）/ Feishu streaming cards plugin install guide
 - **feishu-markdown** — 修复飞书 Markdown 渲染问题（表格、粗体、代码块）/ Fix Feishu markdown rendering (tables, bold, code blocks)
 
 ### 迁移 / Moved
