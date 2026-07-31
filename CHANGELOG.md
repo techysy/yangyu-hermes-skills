@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-07-31
+
+### 新增 / Added
+- **fnos-app-development** — 新增 references/nextjs-standalone-bundling.md：Next.js standalone 应用打包模式（9Router 实战）/ Added Next.js standalone bundling pattern reference (9Router case)
+
+### 变更 / Changed
+- **fnos-app-development** — 修正 TRIM_APPDEST 路径认知：fnOS 1.1.31xx 直接传 /vol4/@appcenter/<App>（server 在根下），旧版传 /var/apps/<App>（server 在 target/ 下）；cmd/main 必须双路径检测，硬编码 target/server 会导致"无法启用/本地应用启动失败" / Fixed TRIM_APPDEST layout: fnOS 1.1.31xx passes /vol4/@appcenter/<App> directly (server at root), older versions /var/apps/<App> (server under target/); cmd/main must detect both layouts
+- **fnos-app-development** — 新增踩坑：fpk 复制到可见目录可能变 mode 000（需 chmod 644）；后台 SSH 杀进程只杀客户端、远端 node 残留占端口（需按 PID 杀） / New pitfalls: fpk copied to visible NAS dir can land mode 000 (chmod 644 needed); killing background SSH session only kills the client, remote node survives holding the port (kill by PID)
+
 ## 2026-07-30
 
 ### 变更 / Changed

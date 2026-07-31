@@ -184,6 +184,8 @@ nohup node bin/hermes-web-ui.mjs >> "${LOG}" 2>&1 &
 
 See `references/hermes-studio-fnos-package.md` for a complete Node.js web app reference. See `references/hermes-agent-fnos-architecture.md` for the official Hermes Agent app on fnOS architecture. See `references/hermes-webui-fnos-package.md` for the HermesWebUI package reference with proxy fixes and Gateway configuration.
 
+**For Next.js apps that ship a prebuilt standalone server in their npm package** (e.g. 9Router) — bundle `package/app/` into `app/server/` at build time instead of npm-install-at-runtime. Includes the hidden-directory pitfall (`cp -r app/*` silently skips `.next-cli-build` → "Could not find a production build"), standalone node_modules completeness check against the project Dockerfile, and local + NAS pre-ship verification: `references/nextjs-standalone-bundling.md`.
+
 ### Wizard → Env Var Mapping Pitfall
 
 Wizard field values are passed to lifecycle scripts as `wizard_<field_name>` env vars. In cmd/main, reference them correctly:
@@ -269,7 +271,21 @@ After installation, the app lives at:
 └── manifest
 ```
 
-**CRITICAL**: `target/` is a symlink to the real app files — use `${TRIM_APPDEST}/target/server` not `${TRIM_APPDEST}/server`.
+**CRITICAL**: `target/` is a symlink to the real app files — but which path is CORRECT depends on what `TRIM_APPDEST` actually contains, and that **varies by fnOS version** (verified 2026-07-31):
+
+- Some fnOS versions: `TRIM_APPDEST=/var/apps/<App>` → real files at `${TRIM_APPDEST}/target/server`
+- **fnOS 1.1.31xx: `TRIM_APPDEST=/vol4/@appcenter/<App>` directly** (the target root itself) → real files at `${TRIM_APPDEST}/server`; `${TRIM_APPDEST}/target/server` does NOT exist → App Center shows 无法启用 / 本地应用启动失败 and the lifecycle log shows `cd: .../target/server: No such file or directory`
+- **Always detect both layouts in cmd/main** — never hardcode one:
+```bash
+if [ -d "${APP_DIR}/server" ]; then
+    SRC_DIR="${APP_DIR}/server"
+elif [ -d "${APP_DIR}/target/server" ]; then
+    SRC_DIR="${APP_DIR}/target/server"
+else
+    echo "ERROR: server dir not found (tried ${APP_DIR}/server and ${APP_DIR}/target/server)" >&2
+    exit 1
+fi
+```
 
 ## cmd/main Lifecycle Script Pattern
 
@@ -278,7 +294,7 @@ After installation, the app lives at:
 set -euo pipefail
 APP_DIR="${TRIM_APPDEST:-/var/apps/${APP_NAME}}"
 DATA_DIR="${TRIM_PKGVAR:-${APP_DIR}/var}"
-SRC_DIR="${APP_DIR}/target/server"       # <-- always under target/
+SRC_DIR="${APP_DIR}/target/server"       # ⚠️ NOT always correct — see CRITICAL above; detect both ${APP_DIR}/server and ${APP_DIR}/target/server
 
 case "${1:-start}" in
   start)
@@ -412,7 +428,7 @@ App installed but service didn't start. Check:
 2. `ss -tlnp | grep <port>` — is the service listening?
 3. `ps aux | grep <app>` — is the process running?
 4. Check `$TRIM_PKGVAR/<appname>.log` — the app's own startup log
-5. Verify source exists at `$TRIM_APPDEST/target/` not `$TRIM_APPDEST/`
+5. Verify source dir: check BOTH `$TRIM_APPDEST/server` and `$TRIM_APPDEST/target/server` — which one exists depends on fnOS version (1.1.31xx: `TRIM_APPDEST=/vol4/@appcenter/<App>` → server is directly under it; older: `/var/apps/<App>` → under `target/`)
 6. Try `type: "url"` instead of `type: "iframe"` — iframe may be blocked by fygo-browser
 
 ### "执行脚本出错且原因未知"
@@ -742,8 +758,10 @@ img.resize((256, 256), Image.LANCZOS).save('app/ui/images/icon_256.png')
 
 ## Pitfalls
 
-- **target/ indirection**: Source files live at `${TRIM_APPDEST}/target/`, not `${TRIM_APPDEST}/`. Always add `target/` before server/ or app subdirs.
+- **target/ indirection VARIES by fnOS version**: Source files may live at `${TRIM_APPDEST}/server` (fnOS 1.1.31xx: `TRIM_APPDEST=/vol4/@appcenter/<App>`) OR `${TRIM_APPDEST}/target/server` (older: `TRIM_APPDEST=/var/apps/<App>`). Hardcoding `target/server` causes 无法启用/本地应用启动失败. Detect both in cmd/main (`-d "${APP_DIR}/server"` first, then `-d "${APP_DIR}/target/server"`). See the CRITICAL note in "Install-Time Directory Structure".
 - **cmd/main working dir**: fnOS runs cmd/main from the download cache (`/vol4/appcenter-downloads/...`), not the app dir. `$(dirname "$0")/..` is WRONG. Use `TRIM_APPDEST` env var.
+- **fpk copied to a visible NAS dir can land with mode 000**: `cp app.fpk /vol4/1000/` (user home volume) may produce `----------` perms, making Web UI manual install unable to read it. Always `chmod 644` after copying and verify with `stat -c "%a"` — otherwise App Center can't see/install the file.
+- **Killing a background SSH process only kills the client**: running a server via `terminal(background=true)` + `ssh host 'node server.js'`, then killing the session kills the ssh client — the REMOTE node process survives and keeps the port. Always kill by remote PID (`ssh host 'kill <pid>'`) and verify with `ss -tlnp | grep <port>` on BOTH machines before re-testing.
 - **Bundle source, don't download**: install_init network downloads fail silently (DNS, rate limits, timing). Put all files in `app/` at build time.
 - **manifest format**: use `key = value` with spaces around `=`, values WITHOUT quotes. Must include `arch`, `distributor`, and `desktop_applaunchname`.
 - **config/privilege**: fnOS validator requires **exact JSON indentation** matching the fnpack template. Minified JSON like `{"defaults": {"run-as": "package"}}` (single line) causes rejection. Required format:
@@ -808,6 +826,46 @@ See `references/hermes-webui-fnos-standalone-repo.md` for the standalone repo pa
 See `references/hermes-agent-native-fnos.md` for native Hermes Agent installation on fnOS (bypassing trim.hermes app).
 
 See `references/connection-switching-feature.md` for the WebUI connection switching feature (local/remote Gateway).
+
+### HERMES_API_URL must point to Gateway API, not Dashboard
+
+**Problem**: Setting `HERMES_API_URL` to Dashboard URL (:9119) causes "Internal server error" when chat is sent, even though `HERMES_WEBUI_CHAT_BACKEND=gateway` and `HERMES_WEBUI_GATEWAY_BASE_URL` point to the correct Gateway API (:8642).
+
+**Root cause**: The health check endpoint `/api/health/agent` uses `HERMES_API_URL`. If Dashboard is unreachable, WebUI refuses to process chat requests.
+
+**Fix**: Set `HERMES_API_URL` to the same Gateway API URL:
+```bash
+export HERMES_API_URL="${REMOTE_GATEWAY}"  # NOT REMOTE_DASHBOARD
+```
+
+**Dashboard vs Gateway API**: Dashboard (:9119) is the management UI. Gateway API (:8642) provides `/v1/chat/completions`. WebUI only needs the Gateway API.
+
+### 重装后进程不会自动重启
+
+fnOS 重装 fpk 不会杀掉旧进程。旧 server.py 可能还在运行（用老配置）或已死但新进程未启动。
+
+**Fix**: 手动重启
+```bash
+kill -9 $(pgrep -f 'server.py')
+cd /var/apps/HermesWebUI && bash cmd/main start
+```
+
+### systemd service for WebUI (Type=forking)
+
+cmd/main uses `nohup ... &` which backgrounds the process. `Type=simple` won't work because systemd sees the script exit immediately. Use `Type=forking` with PIDFile:
+
+```ini
+[Service]
+Type=forking
+ExecStart=/bin/bash /var/apps/HermesWebUI/cmd/main start
+PIDFile=/var/apps/HermesWebUI/var/webui.pid
+```
+
+Requires `loginctl enable-linger` for persistence after logout.
+
+### iframe CORS conflict on fnOS
+
+fnOS desktop window (port 5666) embeds apps via iframe. When WebUI runs on a different port (8787), browser blocks cross-origin requests after the first successful load. **Cannot be fixed** without modifying upstream server.py to add CORS headers. Use `type: "url"` (new tab) instead of `type: "iframe"`.
 
 ### hermes setup needs sudo on fnOS
 
