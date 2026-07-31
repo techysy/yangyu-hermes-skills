@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-08-01
+
+### 迁移 / Moved
+- **fnos-app-development** — 移至独立私有仓库 [techysy/fnos-app-dev-skill](https://github.com/techysy/fnos-app-dev-skill)，包含完整踩坑记录（TRIM_APPDEST 差异、Next.js standalone 打包、静态文件打包、SSH 进程清理等） / Moved to private repo [techysy/fnos-app-dev-skill](https://github.com/techysy/fnos-app-dev-skill) with full development notes
+
 ## 2026-07-31
 
 ### 新增 / Added
