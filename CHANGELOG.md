@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-08-01 (README)
+
+### 变更 / Changed
+- **README** — 新增「Hermes 相关 fnOS 应用」章节，链接三个可部署到飞牛 NAS 的 Hermes 生态应用：hermes-webui-fnos（WebUI）、9router-fnos（AI 路由器/API 代理）、metacubexd-fnos（Mihomo 网络代理面板） / Added "Related fnOS Apps" section linking three Hermes-ecosystem apps deployable to fnOS NAS
+
+---
+
 ## 2026-08-01
 
 ### 新增 / Added

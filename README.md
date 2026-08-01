@@ -45,6 +45,20 @@ hermes skills install outdoor-trip-planner --repo techysy/yangyu-skills-hub
 
 ---
 
+## 🖥️ Hermes 相关 fnOS 应用 / Related fnOS Apps
+
+以下是与 Hermes Agent 生态强关联、可部署到飞牛 NAS (fnOS) 的应用，与上方 skills 配套使用：
+
+| 应用 / App | 仓库 / Repo | 说明 / Description |
+|:-----------|:------------|:-------------------|
+| Hermes WebUI | [hermes-webui-fnos](https://github.com/techysy/hermes-webui-fnos) | Hermes WebUI 轻量封装 — 浏览器访问 Hermes Agent |
+| 9Router | [9router-fnos](https://github.com/techysy/9router-fnos) | FREE AI 路由器 / API 代理 — 连接 Claude Code/Codex 等工具到 40+ AI 提供商 |
+| MetaCubeXD | [metacubexd-fnos](https://github.com/techysy/metacubexd-fnos) | Mihomo 网络代理面板 — 管理规则、节点、连接 |
+
+> 💡 Hermes Agent 本身也可作为 fnOS 应用部署，配合上面的 WebUI / 路由器使用。
+
+---
+
 ## 🤝 贡献 / Contribute
 
 欢迎提交 [PR](https://github.com/techysy/yangyu-skills-hub/pulls) 或 [Issue](https://github.com/techysy/yangyu-skills-hub/issues)！
