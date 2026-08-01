@@ -54,6 +54,7 @@ hermes skills install outdoor-trip-planner --repo techysy/yangyu-skills-hub
 | Hermes WebUI | [hermes-webui-fnos](https://github.com/techysy/hermes-webui-fnos) | Hermes WebUI 轻量封装 — 浏览器访问 Hermes Agent |
 | 9Router | [9router-fnos](https://github.com/techysy/9router-fnos) | FREE AI 路由器 / API 代理 — 连接 Claude Code/Codex 等工具到 40+ AI 提供商 |
 | MetaCubeXD | [metacubexd-fnos](https://github.com/techysy/metacubexd-fnos) | Mihomo 网络代理面板 — 管理规则、节点、连接 |
+| Strava Panel | [strava-panel-fnos](https://github.com/techysy/strava-panel-fnos) | Strava 骑行数据面板 — 凭据管理 + Token 自动刷新 + SQLite 缓存 + agent API |
 
 > 💡 Hermes Agent 本身也可作为 fnOS 应用部署，配合上面的 WebUI / 路由器使用。
 
