@@ -27,6 +27,10 @@
     "xiaomi-mimo-audio": {
       "path": "skills/mlops/xiaomi-mimo-audio",
       "description": "小米 MiMo 语音 API 接入（TTS合成/ASR识别）——非标准chat/completions+audio端点、Hermes command provider配置"
+    },
+    "hermes-cost-management": {
+      "path": "skills/mlops/hermes-cost-management",
+      "description": "Hermes API 成本管理——查提供商余额（DeepSeek等）+ 模型定价配置（内置表/CNY↔USD/¥显示）"
     }
   }
 }
