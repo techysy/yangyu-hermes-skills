@@ -4,7 +4,7 @@
 > YangYu's Hermes Agent Skills Hub
 
 [![GitHub](https://img.shields.io/badge/GitHub-yangyu--skills--hub-blue)](https://github.com/techysy/yangyu-skills-hub)
-[![Skills](https://img.shields.io/badge/skills-7-green.svg)](#-技能列表)
+[![Skills](https://img.shields.io/badge/skills-8-green.svg)](#-技能列表)
 
 ---
 
@@ -25,6 +25,7 @@ hermes skills install outdoor-trip-planner --repo techysy/yangyu-skills-hub
 hermes skills install hermes-voice-tts --repo techysy/yangyu-skills-hub
 hermes skills install xiaomi-mimo-audio --repo techysy/yangyu-skills-hub
 hermes skills install hermes-cost-management --repo techysy/yangyu-skills-hub
+hermes skills install linux-proxy --repo techysy/yangyu-skills-hub
 ```
 
 ---
@@ -41,6 +42,7 @@ hermes skills install hermes-cost-management --repo techysy/yangyu-skills-hub
 | `hermes-voice-tts` | 🎙️ hermes | Hermes TTS 配置与多平台语音投递 / TTS config & multi-platform voice delivery |
 | `xiaomi-mimo-audio` | 🎤 mlops | 小米 MiMo 语音 API 接入（TTS/ASR）/ Xiaomi MiMo speech API |
 | `hermes-cost-management` | 💰 mlops | Hermes 成本管理（余额查询 + 模型定价）/ cost management & model pricing |
+| `linux-proxy` | 🔗 networking | Linux 代理配置（Clash Meta/Mihomo 含 fnOS）/ Linux proxy setup |
 
 ---
 

@@ -31,6 +31,10 @@
     "hermes-cost-management": {
       "path": "skills/mlops/hermes-cost-management",
       "description": "Hermes API 成本管理——查提供商余额（DeepSeek等）+ 模型定价配置（内置表/CNY↔USD/¥显示）"
+    },
+    "linux-proxy": {
+      "path": "skills/networking/linux-proxy",
+      "description": "Linux 代理配置（Clash Meta/Mihomo，含 fnOS）——Bettbox/mihomo安装、订阅、DNS修复、LAN共享、systemd、浏览器/fnOS Chromium代理、远程主机、Dashboard面板"
     }
   }
 }
