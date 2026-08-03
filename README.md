@@ -4,7 +4,7 @@
 > YangYu's Hermes Agent Skills Hub
 
 [![GitHub](https://img.shields.io/badge/GitHub-yangyu--skills--hub-blue)](https://github.com/techysy/yangyu-skills-hub)
-[![Skills](https://img.shields.io/badge/skills-4-green.svg)](#-技能列表)
+[![Skills](https://img.shields.io/badge/skills-6-green.svg)](#-技能列表)
 
 ---
 
@@ -22,6 +22,8 @@ hermes skills install feishu-markdown --repo techysy/yangyu-skills-hub
 hermes skills install lark-streaming --repo techysy/yangyu-skills-hub
 hermes skills install strava-api --repo techysy/yangyu-skills-hub
 hermes skills install outdoor-trip-planner --repo techysy/yangyu-skills-hub
+hermes skills install hermes-voice-tts --repo techysy/yangyu-skills-hub
+hermes skills install xiaomi-mimo-audio --repo techysy/yangyu-skills-hub
 ```
 
 ---
@@ -35,6 +37,8 @@ hermes skills install outdoor-trip-planner --repo techysy/yangyu-skills-hub
 | `lark-streaming` | 🔌 hermes | 飞书流式卡片插件安装指南 / Feishu streaming cards plugin install guide |
 | `strava-api` | 🚴 social-media | Strava 骑行/活动查询 / Strava ride & activity query |
 | `outdoor-trip-planner` | 🏔️ cycling | 户外出行规划（天气/高铁/路线）/ Outdoor trip planner |
+| `hermes-voice-tts` | 🎙️ hermes | Hermes TTS 配置与多平台语音投递 / TTS config & multi-platform voice delivery |
+| `xiaomi-mimo-audio` | 🎤 mlops | 小米 MiMo 语音 API 接入（TTS/ASR）/ Xiaomi MiMo speech API |
 
 ---
 

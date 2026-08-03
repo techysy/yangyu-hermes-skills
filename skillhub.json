@@ -19,6 +19,14 @@
     "outdoor-trip-planner": {
       "path": "skills/cycling/outdoor-trip-planner",
       "description": "户外出行规划（骑行/徒步）——查天气、查高铁票、查路线、一站式搞定"
+    },
+    "hermes-voice-tts": {
+      "path": "skills/hermes/hermes-voice-tts",
+      "description": "Hermes TTS 配置与多平台语音投递（小米MiMo/edge/自定义provider）——Telegram气泡/飞书音频/微信文字"
+    },
+    "xiaomi-mimo-audio": {
+      "path": "skills/mlops/xiaomi-mimo-audio",
+      "description": "小米 MiMo 语音 API 接入（TTS合成/ASR识别）——非标准chat/completions+audio端点、Hermes command provider配置"
     }
   }
 }
