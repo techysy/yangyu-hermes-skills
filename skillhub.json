@@ -42,7 +42,7 @@
     },
     "9router-currency-rmb": {
       "path": "skills/mlops/9router-currency-rmb",
-      "description": "9Router 定价显示货币补丁——Dashboard 定价从 USD($) 改为 RMB(¥)，修改 i18n zh-CN.json"
+      "description": "9Router 定价显示货币补丁——Dashboard 定价从 USD($) 改为本地货币(¥/NT$/円/₫/₩)，修改 i18n locale JSON"
     },
     "linux-proxy": {
       "path": "skills/networking/linux-proxy",
