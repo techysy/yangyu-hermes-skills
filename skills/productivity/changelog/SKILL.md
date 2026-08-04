@@ -71,18 +71,68 @@ platforms: [linux, macos]
 - 引用文件/代码用反引号 `` ` ``（如 `config.yaml`）
 - 重要变动必须记录，保持一致（不能漏记）
 
-## 结合 Conventional Commit
+## 结合 Conventional Commits
 
-Git 提交信息用 Conventional Commit（Add/Fix/Update/Remove/Docs/Style/Refactor/Test/Chore），changelog 条目从提交**提炼**而非照抄：
+Conventional Commits 1.0.0 为提交信息提供人机可读的规范，与 SemVer 相互对应。changelog 从提交**提炼**而非照抄。
 
-| Conventional Commit | Changelog 分类 |
+### 提交格式
+
+```
+<type>[可选 scope]: <描述>
+
+[可选 正文]
+
+[可选 脚注]
+```
+
+### 提交类型
+
+| 类型 | 含义 | SemVer |
+|---|---|---|
+| `feat:` | 新功能 | MINOR |
+| `fix:` | 修复 bug | PATCH |
+| `BREAKING CHANGE:` 脚注 或 `<type>!:` | 破坏性变更 | MAJOR |
+| `build:` | 构建系统/依赖 | — |
+| `chore:` | 非业务性修改/工具配置 | — |
+| `ci:` | 持续集成流程 | — |
+| `docs:` | 文档 | — |
+| `style:` | 代码样式（缩进/空格等） | — |
+| `refactor:` | 重构（不改功能逻辑） | — |
+| `perf:` | 性能优化 | — |
+| `test:` | 测试用例 | — |
+
+范围（scope）用圆括号补充上下文：`feat(parser): adds ability to parse arrays.`。破坏性变更用 `!` 标记：`feat(api)!: drop support for Node 6` 或脚注 `BREAKING CHANGE: ...`。
+
+### 提交类型 → Changelog 分类映射
+
+| Conventional Commit 类型 | Changelog 分类 |
 |---|---|
-| `Add:` / `feat` | Added / 新增 |
-| `Fix:` / `fix` | Fixed / 修复 |
-| `Update:` | Changed / 变更 |
-| `Remove:` | Removed / 移除 |
-| `Docs:` | 一般不记入 changelog（除非影响用户） |
-| `Style:`/`Refactor:`/`Test:`/`Chore:` | 一般省略 |
+| `feat:` / `feat(scope):` | Added / 新增 |
+| `fix:` / `fix(scope):` | Fixed / 修复 |
+| `refactor:` / `perf:` / `style:` / `chore:` | Changed / 变更 |
+| `!` / `BREAKING CHANGE:` | Removed / 移除（若删功能）或 Changed（若改接口） |
+| `docs:` | 一般不记入 changelog（除非影响用户） |
+| `build:` / `ci:` / `test:` | 一般省略 |
+
+> 破坏性变更（`BREAKING CHANGE`）在 changelog 中必须显著标注，常置于 `Removed` 或单独强调。
+
+### SemVer 版本号规则
+
+根据提交类型决定新版本号：
+- **MAJOR**（破坏性变更 `BREAKING CHANGE` / `!`）→ `X+1.0.0`
+- **MINOR**（`feat:` 新功能）→ `X.Y+1.0`
+- **PATCH**（`fix:` 修复）→ `X.Y.Z+1`
+- 项目若用 4 位版本（如 fnOS 应用 `0.4.4.14`），测试包累加第 4 位，正式版升第 3 位
+
+### 生成 changelog 条目
+
+从提交记录提炼显著变更（非照抄），按提交类型归类到对应 changelog 分类：
+
+```bash
+# 查看某版本间的提交
+git log v1.2.2..v1.2.3 --oneline
+```
+
 
 ## 版本对比链接（可选，推荐）
 
