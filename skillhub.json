@@ -1,8 +1,8 @@
 {
-  "name": "yangyu-skills",
+  "name": "yangyu-hermes-skills",
   "description": "洋芋的 Hermes Agent 技能集合",
   "author": "techysy",
-  "repo": "https://github.com/techysy/yangyu-skills-hub",
+  "repo": "https://github.com/techysy/yangyu-hermes-skills",
   "skills": {
     "git-project-lifecycle": {
       "path": "skills/software-development/git-project-lifecycle",

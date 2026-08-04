@@ -1,4 +1,4 @@
-# 🐛 yangyu-skills-hub — Hermes 使用 FAQ / FAQ
+# 🐛 yangyu-hermes-skills — Hermes 使用 FAQ / FAQ
 
 > 记录日常使用 Hermes Agent 遇到的问题和解决方案，持续更新。
 > 覆盖两种部署场景：**飞牛原生 App**（hermes-core-fnos，容器化无需手动初始化）和 **虚拟机部署**（任何 VM 场景）。
