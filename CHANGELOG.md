@@ -8,6 +8,7 @@
 - **TROUBLESHOOTING.md → HERMES-FAQ.md** — 明确指向 Hermes 使用 FAQ（原文件名过于宽泛，易与 git 排障混淆）/ Renamed to clarify it's the Hermes usage FAQ (old name too generic, confused with git troubleshooting)
 
 ### 新增 / Added
+- **readme-structure** — 开源项目 README 结构规范：主版中文+README.en.md英文版、按读者分层、排障拆独立文档、用户价值优先 / README structure convention: CN main + README.en.md, reader-layered, troubleshooting in separate doc
 - **9router-currency-rmb** — 9Router 定价显示本地货币补丁：支持 zh-CN(¥)、zh-TW(NT$)、ja(円)、vi(₫)、ko(₩)，含一键脚本 / Local currency patch for 9Router pricing: supports CNY/TWD/JPY/VND/KRW
 
 ### 变更 / Changed

@@ -12,6 +12,10 @@
       "path": "skills/software-development/git-release-troubleshooting",
       "description": "Git 发布/版本流程故障排查——版本号、CHANGELOG、tag、GitHub Release、提交 常见坑"
     },
+    "readme-structure": {
+      "path": "skills/software-development/readme-structure",
+      "description": "开源项目 README 结构规范——主版中文+README.en.md英文版、按读者分层、排障拆独立文档、用户价值优先"
+    },
     "feishu-table-render": {
       "path": "skills/productivity/feishu-table-render",
       "description": "修复飞书 Markdown 表格渲染问题"

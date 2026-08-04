@@ -4,7 +4,7 @@
 > YangYu's Hermes Agent Skills Hub
 
 [![GitHub](https://img.shields.io/badge/GitHub-yangyu--skills--hub-blue)](https://github.com/techysy/yangyu-skills-hub)
-[![Skills](https://img.shields.io/badge/skills-11-green.svg)](#-技能列表)
+[![Skills](https://img.shields.io/badge/skills-12-green.svg)](#-技能列表)
 
 ---
 
@@ -29,6 +29,7 @@ hermes skills install 9router-currency-rmb --repo techysy/yangyu-skills-hub
 hermes skills install linux-proxy --repo techysy/yangyu-skills-hub
 hermes skills install git-project-lifecycle --repo techysy/yangyu-skills-hub
 hermes skills install git-release-troubleshooting --repo techysy/yangyu-skills-hub
+hermes skills install readme-structure --repo techysy/yangyu-skills-hub
 ```
 
 ---
@@ -49,6 +50,7 @@ hermes skills install git-release-troubleshooting --repo techysy/yangyu-skills-h
 | `linux-proxy` | 🔗 networking | Linux 代理配置（Clash Meta/Mihomo 含 fnOS）/ Linux proxy setup |
 | `git-project-lifecycle` | 🚀 software-development | Git 项目全生命周期（提交规范/版本/变更日志/发版）/ Git project lifecycle |
 | `git-release-troubleshooting` | 🚀 software-development | Git 发布/版本流程故障排查 / Git release & version troubleshooting |
+| `readme-structure` | 🚀 software-development | 开源项目 README 结构规范（中英分离/按读者分层）/ README structure convention |
 
 ---
 
