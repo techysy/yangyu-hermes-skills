@@ -1,6 +1,6 @@
-# 🐛 yangyu-skills-hub — Hermes 使用问题排查 / Troubleshooting
+# 🐛 yangyu-skills-hub — Hermes 使用 FAQ / FAQ
 
-> 记录日常使用 Hermes Agent 遇到的坑和解决方案，持续更新。
+> 记录日常使用 Hermes Agent 遇到的问题和解决方案，持续更新。
 > 适用于 Hermes v0.19.0 + Arch VM + 飞书/钉钉/微信网关环境。
 
 ---

@@ -79,7 +79,7 @@ PRs and Issues are welcome!
 
 ---
 
-## 🐛 问题排查 / Troubleshooting
+## 🐛 问题排查 / FAQ
 
-日常使用 Hermes Agent 遇到的坑与解决方案：[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
-Pitfalls & fixes from daily Hermes usage: [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+日常使用 Hermes Agent 遇到的问题与解决方案：[HERMES-FAQ.md](./HERMES-FAQ.md)
+Pitfalls & fixes from daily Hermes usage: [HERMES-FAQ.md](./HERMES-FAQ.md)

@@ -4,6 +4,13 @@
 
 ## 2026-08-04
 
+### 重命名 / Renamed
+- **TROUBLESHOOTING.md → HERMES-FAQ.md** — 明确指向 Hermes 使用 FAQ（原文件名过于宽泛，易与 git 排障混淆）/ Renamed to clarify it's the Hermes usage FAQ (old name too generic, confused with git troubleshooting)
+
+---
+
+## 2026-08-04
+
 ### 新增 / Added
 - **git-release-troubleshooting** — 精简为通用排障：去除平台限定（非 fnOS 专属），补充真实开源项目场景案例（spot-studio、web-jpg-tool、tianfu-greenway-ranking、navi-bookmarks-chrome、inspection-visualizer、film-price-tracker、daily-inspection-checklist）/ Streamlined to generic troubleshooting: removed platform-specific (non-fnOS) constraints, added real open-source project case studies
 
