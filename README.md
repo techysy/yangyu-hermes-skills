@@ -4,7 +4,7 @@
 > YangYu's Hermes Agent Skills Hub
 
 [![GitHub](https://img.shields.io/badge/GitHub-yangyu--skills--hub-blue)](https://github.com/techysy/yangyu-skills-hub)
-[![Skills](https://img.shields.io/badge/skills-10-green.svg)](#-技能列表)
+[![Skills](https://img.shields.io/badge/skills-11-green.svg)](#-技能列表)
 
 ---
 
@@ -25,6 +25,7 @@ hermes skills install outdoor-trip-planner --repo techysy/yangyu-skills-hub
 hermes skills install hermes-voice-tts --repo techysy/yangyu-skills-hub
 hermes skills install xiaomi-mimo-audio --repo techysy/yangyu-skills-hub
 hermes skills install hermes-cost-management --repo techysy/yangyu-skills-hub
+hermes skills install 9router-currency-rmb --repo techysy/yangyu-skills-hub
 hermes skills install linux-proxy --repo techysy/yangyu-skills-hub
 hermes skills install git-project-lifecycle --repo techysy/yangyu-skills-hub
 hermes skills install git-release-troubleshooting --repo techysy/yangyu-skills-hub
@@ -44,6 +45,7 @@ hermes skills install git-release-troubleshooting --repo techysy/yangyu-skills-h
 | `hermes-voice-tts` | 🎙️ hermes | Hermes TTS 配置与多平台语音投递 / TTS config & multi-platform voice delivery |
 | `xiaomi-mimo-audio` | 🎤 mlops | 小米 MiMo 语音 API 接入（TTS/ASR）/ Xiaomi MiMo speech API |
 | `hermes-cost-management` | 💰 mlops | Hermes 成本管理（余额查询 + 模型定价）/ cost management & model pricing |
+| `9router-currency-rmb` | 💰 mlops | 9Router 定价 RMB 补丁（USD→¥）/ 9Router pricing currency patch |
 | `linux-proxy` | 🔗 networking | Linux 代理配置（Clash Meta/Mihomo 含 fnOS）/ Linux proxy setup |
 | `git-project-lifecycle` | 🚀 software-development | Git 项目全生命周期（提交规范/版本/变更日志/发版）/ Git project lifecycle |
 | `git-release-troubleshooting` | 🚀 software-development | Git 发布/版本流程故障排查 / Git release & version troubleshooting |
