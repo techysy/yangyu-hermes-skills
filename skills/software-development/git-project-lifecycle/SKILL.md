@@ -1,11 +1,11 @@
 ---
-name: release-management
-description: "管理 GitHub 项目的完整发版生命周期 — Conventional Commits 提交规范、SemVer 语义化版本号、Keep a Changelog 更新日志、发版流程。从提交到发版一站式。Use when versioning a release, writing CHANGELOG, deciding commit message conventions, bumping version numbers, or preparing a GitHub release."
+name: git-project-lifecycle
+description: "Git 项目全生命周期管理（提交规范 / 版本 / 变更日志 / 发版）— Conventional Commits 1.0.0 提交规范、SemVer 语义化版本号、Keep a Changelog 1.1.0 变更日志、发版流程。从提交到发版一站式。Use when versioning a release, writing CHANGELOG.md, deciding commit message conventions, bumping version numbers, preparing a GitHub release, or managing a project's release lifecycle."
 version: 1.0.0
 platforms: [linux, macos]
 ---
 
-# Release Management（发版管理）
+# Git 项目全生命周期管理（提交规范 / 版本 / 变更日志 / 发版）
 
 管理 GitHub 项目从提交到发版的完整生命周期，统一三个参考规范：
 
@@ -53,7 +53,7 @@ platforms: [linux, macos]
 - **4 位版本**（如 fnOS 应用 `0.4.4.14`）：测试包累加第 4 位，正式版升第 3 位
 - 发正式版需明确确认；测试包可随时打包
 
-## 三、更新日志（Keep a Changelog 1.1.0）
+## 三、变更日志（Keep a Changelog 1.1.0）
 
 ### 文件结构
 

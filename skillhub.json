@@ -4,9 +4,9 @@
   "author": "techysy",
   "repo": "https://github.com/techysy/yangyu-skills-hub",
   "skills": {
-    "release-management": {
-      "path": "skills/software-development/release-management",
-      "description": "GitHub 项目发版管理——Conventional Commits 提交规范、SemVer 版本号、Keep a Changelog 更新日志、发版流程"
+    "git-project-lifecycle": {
+      "path": "skills/software-development/git-project-lifecycle",
+      "description": "Git 项目全生命周期管理（提交规范 / 版本 / 变更日志 / 发版）——Conventional Commits、SemVer、Keep a Changelog"
     },
     "feishu-table-render": {
       "path": "skills/productivity/feishu-table-render",

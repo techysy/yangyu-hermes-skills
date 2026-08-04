@@ -26,7 +26,7 @@ hermes skills install hermes-voice-tts --repo techysy/yangyu-skills-hub
 hermes skills install xiaomi-mimo-audio --repo techysy/yangyu-skills-hub
 hermes skills install hermes-cost-management --repo techysy/yangyu-skills-hub
 hermes skills install linux-proxy --repo techysy/yangyu-skills-hub
-hermes skills install release-management --repo techysy/yangyu-skills-hub
+hermes skills install git-project-lifecycle --repo techysy/yangyu-skills-hub
 ```
 
 ---
@@ -44,7 +44,7 @@ hermes skills install release-management --repo techysy/yangyu-skills-hub
 | `xiaomi-mimo-audio` | 🎤 mlops | 小米 MiMo 语音 API 接入（TTS/ASR）/ Xiaomi MiMo speech API |
 | `hermes-cost-management` | 💰 mlops | Hermes 成本管理（余额查询 + 模型定价）/ cost management & model pricing |
 | `linux-proxy` | 🔗 networking | Linux 代理配置（Clash Meta/Mihomo 含 fnOS）/ Linux proxy setup |
-| `release-management` | 🚀 software-development | 发版管理（提交规范/版本号/更新日志/发版）/ Release management |
+| `git-project-lifecycle` | 🚀 software-development | Git 项目全生命周期（提交规范/版本/变更日志/发版）/ Git project lifecycle |
 
 ---
 
