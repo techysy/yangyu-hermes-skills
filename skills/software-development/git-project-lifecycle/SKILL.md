@@ -1,7 +1,7 @@
 ---
 name: git-project-lifecycle
 description: "Git 项目全生命周期管理（提交规范 / 版本 / 变更日志 / 发版）— Conventional Commits 1.0.0 提交规范、SemVer 语义化版本号、Keep a Changelog 1.1.0 变更日志、发版流程。从提交到发版一站式。Use when versioning a release, writing CHANGELOG.md, deciding commit message conventions, bumping version numbers, preparing a GitHub release, or managing a project's release lifecycle."
-version: 1.0.0
+version: 1.1.0
 platforms: [linux, macos]
 ---
 
