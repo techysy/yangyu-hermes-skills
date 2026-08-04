@@ -8,7 +8,7 @@
 - **git-release-troubleshooting** — Git 发布/版本流程故障排查独立模块（版本号、CHANGELOG、git tag、GitHub Release、提交的常见坑） / New standalone module for Git release & version troubleshooting (version number, CHANGELOG, git tag, GitHub Release, commit pitfalls)
 
 ### 变更 / Changed
-- **git-project-lifecycle** — version 升至 1.1.0；新增 TROUBLESHOOTING 章节（规范落地常见坑），排障内容与独立模块 git-release-troubleshooting 互补 / Bumped to 1.1.0; added TROUBLESHOOTING section, complements the new standalone module
+- **git-project-lifecycle** — version 升至 1.1.0；排障内容移入独立模块 git-release-troubleshooting，主流程保持纯净 / Bumped to 1.1.0; troubleshooting moved to standalone module, main flow kept clean
 - **README** — 技能数 9→10，新增 git-release-troubleshooting 安装示例与列表 / Skills count 9→10, added install example & list entry
 
 ---
