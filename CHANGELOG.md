@@ -5,10 +5,11 @@
 ## 2026-08-04
 
 ### 新增 / Added
-- **git-release-troubleshooting** — Git 发布/版本流程故障排查独立模块（版本号、CHANGELOG、git tag、GitHub Release、提交的常见坑） / New standalone module for Git release & version troubleshooting (version number, CHANGELOG, git tag, GitHub Release, commit pitfalls)
+- **git-release-troubleshooting** — 精简为通用排障：去除平台限定（非 fnOS 专属），补充真实开源项目场景案例（spot-studio、web-jpg-tool、tianfu-greenway-ranking、navi-bookmarks-chrome、inspection-visualizer、film-price-tracker、daily-inspection-checklist）/ Streamlined to generic troubleshooting: removed platform-specific (non-fnOS) constraints, added real open-source project case studies
 
 ### 变更 / Changed
 - **git-project-lifecycle** — version 升至 1.1.0；排障内容移入独立模块 git-release-troubleshooting，主流程保持纯净 / Bumped to 1.1.0; troubleshooting moved to standalone module, main flow kept clean
+- **git-release-troubleshooting** — 移除 fnOS 专属的 4 位版本号内容，改为平台无关通用排障（多语言项目版本字段、预发布/正式版、Docker 镜像 tag、CI 自动构建产物）；version 升至 1.1.0 / Removed fnOS-specific 4-part versioning, generalized to platform-agnostic troubleshooting (multi-lang version fields, pre-release/stable, Docker image tag, CI auto-build); bumped to 1.1.0
 - **README** — 技能数 9→10，新增 git-release-troubleshooting 安装示例与列表 / Skills count 9→10, added install example & list entry
 
 ---
