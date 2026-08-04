@@ -7,6 +7,9 @@
 ### 重命名 / Renamed
 - **TROUBLESHOOTING.md → HERMES-FAQ.md** — 明确指向 Hermes 使用 FAQ（原文件名过于宽泛，易与 git 排障混淆）/ Renamed to clarify it's the Hermes usage FAQ (old name too generic, confused with git troubleshooting)
 
+### 变更 / Changed
+- **HERMES-FAQ.md** — 重构内容：新增飞牛原生 App (hermes-core-fnos) 场景（6 条）、虚拟机部署场景（5 条）、通用问题（7 条），更新架构说明 / Restructured: added fnOS app scenario (hermes-core-fnos), VM deployment, and generic issues with updated architecture
+
 ---
 
 ## 2026-08-04
