@@ -4,6 +4,10 @@
   "author": "techysy",
   "repo": "https://github.com/techysy/yangyu-skills-hub",
   "skills": {
+    "changelog": {
+      "path": "skills/productivity/changelog",
+      "description": "维护 CHANGELOG.md 更新日志——遵循 Keep a Changelog 1.1.0 + 语义化版本，结合中文/Conventional Commit 实践"
+    },
     "feishu-table-render": {
       "path": "skills/productivity/feishu-table-render",
       "description": "修复飞书 Markdown 表格渲染问题"
