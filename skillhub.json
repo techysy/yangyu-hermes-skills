@@ -6,11 +6,7 @@
   "skills": {
     "git-project-lifecycle": {
       "path": "skills/software-development/git-project-lifecycle",
-      "description": "Git 项目全生命周期管理（提交规范 / 版本 / 变更日志 / 发版）——Conventional Commits、SemVer、Keep a Changelog"
-    },
-    "git-release-troubleshooting": {
-      "path": "skills/software-development/git-release-troubleshooting",
-      "description": "Git 发布/版本流程故障排查——版本号、CHANGELOG、tag、GitHub Release、提交 常见坑"
+      "description": "Git 项目全生命周期（提交规范/版本/变更日志/发版 + 故障排查）——Conventional Commits、SemVer、Keep a Changelog"
     },
     "readme-structure": {
       "path": "skills/software-development/readme-structure",

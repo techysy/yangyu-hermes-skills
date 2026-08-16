@@ -4,6 +4,14 @@
 
 ## 2026-08-16
 
+### 合并 / Merged
+- **git-release-troubleshooting → git-project-lifecycle** — Git 发布/版本流程的排障模块合并进主技能，git-project-lifecycle 升 v2.0.0（正向流程 + 排障完整版）
+- 技能数 9 → **8**
+
+---
+
+## 2026-08-16
+
 ### 废弃 / Deprecated
 - **strava-api** — 移至独立仓库 `techysy/yangyu-strava-skill`（避免双仓库维护），本仓库删除
 

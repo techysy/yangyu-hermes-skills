@@ -38,7 +38,6 @@ hermes skills install techysy/yangyu-hermes-skills/hermes/hermes-voice-tts
 hermes skills install techysy/yangyu-hermes-skills/mlops/hermes-cost-management
 hermes skills install techysy/yangyu-hermes-skills/networking/linux-proxy
 hermes skills install techysy/yangyu-hermes-skills/software-development/git-project-lifecycle
-hermes skills install techysy/yangyu-hermes-skills/software-development/git-release-troubleshooting
 hermes skills install techysy/yangyu-hermes-skills/software-development/readme-structure
 ```
 
@@ -56,8 +55,7 @@ hermes skills install techysy/yangyu-hermes-skills/software-development/readme-s
 | `hermes-voice-tts` | 🎙️ hermes | Hermes TTS/STT 配置与多平台语音投递（含小米 MiMo TTS+ASR）/ TTS & multi-platform voice delivery |
 | `hermes-cost-management` | 💰 mlops | Hermes 成本管理（余额查询 + 模型定价）/ cost management & model pricing |
 | `linux-proxy` | 🔗 networking | Linux 代理配置（Clash Meta/Mihomo 含 fnOS）/ Linux proxy setup |
-| `git-project-lifecycle` | 🚀 software-development | Git 项目全生命周期（提交规范/版本/变更日志/发版）/ Git project lifecycle |
-| `git-release-troubleshooting` | 🚀 software-development | Git 发布/版本流程故障排查 / Git release & version troubleshooting |
+| `git-project-lifecycle` | 🚀 software-development | Git 项目全生命周期（提交规范/版本/变更日志/发版/排障）/ Git project lifecycle & troubleshooting |
 | `readme-structure` | 🚀 software-development | 开源项目 README 结构规范（中英分离/按读者分层）/ README structure convention |
 
 ---
