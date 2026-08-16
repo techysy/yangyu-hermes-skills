@@ -4,6 +4,17 @@
 
 ## 2026-08-16
 
+### 废弃 / Deprecated
+- **strava-api** — 移至独立仓库 `techysy/yangyu-strava-skill`（避免双仓库维护），本仓库删除
+
+### 合并 / Merged
+- **xiaomi-mimo-audio → hermes-voice-tts** — 语音技能合并，hermes-voice-tts 升 v2.0.0（含小米 MiMo TTS+ASR 完整细节 + 脚本 mimo_tts.py/mimo_stt.py）
+- 技能数 11 → **9**（去掉 strava-api、xiaomi-mimo-audio）
+
+---
+
+## 2026-08-16
+
 ### 合并 / Merged
 - **feishu-table-render → feishu-markdown** — 两者重叠（都修复飞书 Markdown 表格），合并为 feishu-markdown v1.2.0（含表格/粗体/代码块 + 完整排障细节），删除 feishu-table-render
 

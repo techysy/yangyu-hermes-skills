@@ -16,21 +16,13 @@
       "path": "skills/software-development/readme-structure",
       "description": "开源项目 README 结构规范——主版中文+README.en.md英文版、按读者分层、排障拆独立文档、用户价值优先"
     },
-    "strava-api": {
-      "path": "skills/social-media/strava-api",
-      "description": "Strava API 技能 — 查询骑行活动、月度统计、分析数据"
-    },
     "outdoor-trip-planner": {
       "path": "skills/cycling/outdoor-trip-planner",
       "description": "户外出行规划（骑行/徒步）——查天气、查高铁票、查路线、一站式搞定"
     },
     "hermes-voice-tts": {
       "path": "skills/hermes/hermes-voice-tts",
-      "description": "Hermes TTS 配置与多平台语音投递（小米MiMo/edge/自定义provider）——Telegram气泡/飞书音频/微信文字"
-    },
-    "xiaomi-mimo-audio": {
-      "path": "skills/mlops/xiaomi-mimo-audio",
-      "description": "小米 MiMo 语音 API 接入（TTS合成/ASR识别）——非标准chat/completions+audio端点、Hermes command provider配置"
+      "description": "Hermes TTS/STT 配置与多平台语音投递（小米MiMo/edge/自定义provider，含 ASR）——Telegram气泡/飞书音频/微信文字"
     },
     "hermes-cost-management": {
       "path": "skills/mlops/hermes-cost-management",

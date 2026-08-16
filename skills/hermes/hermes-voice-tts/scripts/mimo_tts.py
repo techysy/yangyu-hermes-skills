@@ -7,7 +7,9 @@ Hermes tts.providers.mimo (type: command) 调用入口：
 
 API: POST https://api.xiaomimimo.com/v1/chat/completions (chat + audio modality)
 文档: https://mimo.mi.com/static/docs/quick-start/usage-guide/audio/speech-synthesis-v2.5.md
-关键坑: 小米不支持 ogg; Telegram 语音气泡必须 Opus 编码 (Vorbis 播放速度异常)
+关键: 文本必须放 role: assistant; 支持 wav/mp3/pcm/pcm16(不支持ogg);
+      音色: mimo_default/冰糖/茉莉/苏打/白桦/Mia/Chloe/Milo/Dean
+Telegram 语音气泡: --format ogg 时内部用 libopus 编码(48000Hz mono), Vorbis 会播放速度异常
 """
 
 import argparse
@@ -34,7 +36,6 @@ def get_api_key() -> str:
     key = os.environ.get("XIAOMI_API_KEY", "")
     if key:
         return key.strip()
-    # 从 Hermes .env 兜底
     env_path = os.path.expanduser("~/.hermes/.env")
     if os.path.exists(env_path):
         try:

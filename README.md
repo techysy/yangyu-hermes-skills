@@ -33,10 +33,8 @@ hermes skills install techysy/yangyu-hermes-skills/productivity/feishu-markdown
 # 方式二: 完整 identifier
 hermes skills install techysy/yangyu-hermes-skills/productivity/feishu-markdown
 hermes skills install techysy/yangyu-hermes-skills/hermes/lark-streaming
-hermes skills install techysy/yangyu-hermes-skills/social-media/strava-api
 hermes skills install techysy/yangyu-hermes-skills/cycling/outdoor-trip-planner
 hermes skills install techysy/yangyu-hermes-skills/hermes/hermes-voice-tts
-hermes skills install techysy/yangyu-hermes-skills/mlops/xiaomi-mimo-audio
 hermes skills install techysy/yangyu-hermes-skills/mlops/hermes-cost-management
 hermes skills install techysy/yangyu-hermes-skills/networking/linux-proxy
 hermes skills install techysy/yangyu-hermes-skills/software-development/git-project-lifecycle
@@ -54,10 +52,8 @@ hermes skills install techysy/yangyu-hermes-skills/software-development/readme-s
 |:------|:---------|:------------|
 | `feishu-markdown` | 📄 productivity | 修复飞书 Markdown 渲染（表格/粗体/代码块，已合并 table-render）/ Fix Feishu markdown rendering |
 | `lark-streaming` | 🔌 hermes | 飞书流式卡片插件安装指南 / Feishu streaming cards plugin install guide |
-| `strava-api` | 🚴 social-media | Strava 骑行/活动查询 / Strava ride & activity query |
 | `outdoor-trip-planner` | 🏔️ cycling | 户外出行规划（天气/高铁/路线）/ Outdoor trip planner |
-| `hermes-voice-tts` | 🎙️ hermes | Hermes TTS 配置与多平台语音投递 / TTS config & multi-platform voice delivery |
-| `xiaomi-mimo-audio` | 🎤 mlops | 小米 MiMo 语音 API 接入（TTS/ASR）/ Xiaomi MiMo speech API |
+| `hermes-voice-tts` | 🎙️ hermes | Hermes TTS/STT 配置与多平台语音投递（含小米 MiMo TTS+ASR）/ TTS & multi-platform voice delivery |
 | `hermes-cost-management` | 💰 mlops | Hermes 成本管理（余额查询 + 模型定价）/ cost management & model pricing |
 | `linux-proxy` | 🔗 networking | Linux 代理配置（Clash Meta/Mihomo 含 fnOS）/ Linux proxy setup |
 | `git-project-lifecycle` | 🚀 software-development | Git 项目全生命周期（提交规范/版本/变更日志/发版）/ Git project lifecycle |
@@ -69,7 +65,6 @@ hermes skills install techysy/yangyu-hermes-skills/software-development/readme-s
 ## 📋 前置依赖 / Prerequisites
 
 - `outdoor-trip-planner` 需要安装第三方 [12306 skill](https://github.com/techysy/yangyu-hermes-skills)。先用 `hermes skills tap add <owner>/<repo>` 添加其仓库，再 `hermes skills install 12306`（或直接 `hermes skills install <owner>/<repo>/<path-to-12306>`）
-- `strava-api` 需要配置 Strava API 凭据 / needs Strava API credentials configured
 
 ---
 
