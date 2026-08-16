@@ -244,7 +244,7 @@ sqlite3 ~/.hermes/state.db "SELECT id, model FROM sessions ORDER BY started_at D
 
 ### 4.7 飞书表格渲染
 
-`feishu-table-render` skill：飞书 Markdown 表格需 `post+md` 渲染，`final_response_markdown` 必须放在 `display:` 配置节下。
+`feishu-markdown` skill：飞书 Markdown 表格需 `post+md` 渲染，`final_response_markdown` 必须放在 `display:` 配置节下。（原 `feishu-table-render` 已合并进 `feishu-markdown`）
 
 ---
 
