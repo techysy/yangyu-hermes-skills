@@ -7,7 +7,7 @@ license: MIT
 metadata:
   hermes:
     tags: [feishu, lark, streaming, cards, plugin]
-    related_skills: [feishu-markdown, feishu-table-render]
+    related_skills: [feishu-markdown]
 ---
 
 # hermes-lark-streaming 安装指南

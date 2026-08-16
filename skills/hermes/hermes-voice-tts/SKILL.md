@@ -2,6 +2,9 @@
 name: hermes-voice-tts
 description: "Configure TTS providers in Hermes and deliver voice messages across messaging platforms. Covers custom command providers (tts.providers.<name>), Xiaomi MiMo TTS API, Telegram voice bubbles (Opus-encoded ogg + [[audio_as_voice]] directive), Feishu audio messages, WeChat text-only. Use when setting up TTS, adding a provider, or fixing voice delivery (file vs bubble, playback speed)."
 platforms: [linux, macos]
+metadata:
+  hermes:
+    related_skills: [xiaomi-mimo-audio]
 ---
 
 # Hermes TTS & 渠道语音投递

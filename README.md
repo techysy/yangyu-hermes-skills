@@ -17,20 +17,19 @@
 hermes skills tap add techysy/yangyu-hermes-skills
 
 # 2. 用短名安装任意技能
-hermes skills install feishu-table-render
+hermes skills install feishu-markdown
 ```
 
 ### 方式二：完整 identifier 安装
 
 ```bash
 # 用 owner/repo/<category>/<name> 完整标识直接安装 (无需注册)
-hermes skills install techysy/yangyu-hermes-skills/productivity/feishu-table-render
+hermes skills install techysy/yangyu-hermes-skills/productivity/feishu-markdown
 ```
 
 **示例 / Examples:**
 ```bash
 # 方式二: 完整 identifier
-hermes skills install techysy/yangyu-hermes-skills/productivity/feishu-table-render
 hermes skills install techysy/yangyu-hermes-skills/productivity/feishu-markdown
 hermes skills install techysy/yangyu-hermes-skills/hermes/lark-streaming
 hermes skills install techysy/yangyu-hermes-skills/social-media/strava-api
@@ -53,8 +52,7 @@ hermes skills install techysy/yangyu-hermes-skills/software-development/readme-s
 
 | Skill | Category | Description |
 |:------|:---------|:------------|
-| `feishu-table-render` | 📄 productivity | 修复飞书 Markdown 表格渲染 / Fix Feishu table rendering |
-| `feishu-markdown` | 📄 productivity | 修复飞书 Markdown 渲染（表格/粗体/代码块）/ Fix Feishu markdown rendering |
+| `feishu-markdown` | 📄 productivity | 修复飞书 Markdown 渲染（表格/粗体/代码块，已合并 table-render）/ Fix Feishu markdown rendering |
 | `lark-streaming` | 🔌 hermes | 飞书流式卡片插件安装指南 / Feishu streaming cards plugin install guide |
 | `strava-api` | 🚴 social-media | Strava 骑行/活动查询 / Strava ride & activity query |
 | `outdoor-trip-planner` | 🏔️ cycling | 户外出行规划（天气/高铁/路线）/ Outdoor trip planner |

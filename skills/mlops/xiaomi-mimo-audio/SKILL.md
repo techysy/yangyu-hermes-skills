@@ -2,6 +2,9 @@
 name: xiaomi-mimo-audio
 description: "Xiaomi MiMo 语音 API 接入（TTS 合成 / ASR 识别）——非标准 chat/completions+audio 端点、Hermes command provider 配置、Telegram 语音气泡（Opus 编码 + [[audio_as_voice]]）、渠道支持矩阵"
 platforms: [linux, macos]
+metadata:
+  hermes:
+    related_skills: [hermes-voice-tts]
 ---
 
 # Xiaomi MiMo 语音 API 接入

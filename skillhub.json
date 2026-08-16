@@ -16,17 +16,9 @@
       "path": "skills/software-development/readme-structure",
       "description": "开源项目 README 结构规范——主版中文+README.en.md英文版、按读者分层、排障拆独立文档、用户价值优先"
     },
-    "feishu-table-render": {
-      "path": "skills/productivity/feishu-table-render",
-      "description": "修复飞书 Markdown 表格渲染问题"
-    },
     "strava-api": {
       "path": "skills/social-media/strava-api",
       "description": "Strava API 技能 — 查询骑行活动、月度统计、分析数据"
-    },
-    "fnos-app-development": {
-      "path": "skills/productivity/fnos-app-development",
-      "description": "飞牛NAS (fnOS) 应用开发——fnpack打包、manifest、生命周期脚本、入口配置、调试排错"
     },
     "outdoor-trip-planner": {
       "path": "skills/cycling/outdoor-trip-planner",
@@ -51,6 +43,14 @@
     "linux-proxy": {
       "path": "skills/networking/linux-proxy",
       "description": "Linux 代理配置（Clash Meta/Mihomo，含 fnOS）——Bettbox/mihomo安装、订阅、DNS修复、LAN共享、systemd、浏览器/fnOS Chromium代理、远程主机、Dashboard面板"
+    },
+    "feishu-markdown": {
+      "path": "skills/productivity/feishu-markdown",
+      "description": "修复飞书 Markdown 渲染（表格/粗体/代码块）——已合并 feishu-table-render"
+    },
+    "lark-streaming": {
+      "path": "skills/hermes/lark-streaming",
+      "description": "飞书/Lark CardKit v2.0 流式卡片插件安装指南（hermes-lark-streaming）"
     }
   }
 }

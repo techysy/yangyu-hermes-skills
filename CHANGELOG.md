@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-08-16
+
+### 合并 / Merged
+- **feishu-table-render → feishu-markdown** — 两者重叠（都修复飞书 Markdown 表格），合并为 feishu-markdown v1.2.0（含表格/粗体/代码块 + 完整排障细节），删除 feishu-table-render
+
+### 清理 / Cleanup
+- **skillhub.json 索引** — 移除已移到私有仓库的 `fnos-app-development`（`techysy/fnos-app-dev-skill`）；补入缺失的 `feishu-markdown`、`lark-streaming`；技能数与目录完全对齐（12 个）
+
+### 关联 / Related
+- **hermes-voice-tts ↔ xiaomi-mimo-audio** — 互补技能补 `related_skills` 互引（通用 TTS 配置 vs 小米 MiMo 专项）
+
+---
+
 ## 2026-08-04
 
 ### 重命名 / Renamed
