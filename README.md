@@ -10,27 +10,42 @@
 
 ## 📦 安装 / Install
 
+### 方式一：注册技能源 + 短名安装（推荐）
+
 ```bash
-hermes skills install <skill-name> --repo techysy/yangyu-hermes-skills
-# 无需注册，指定 --repo 即可直装 / No registration needed
+# 1. 把本仓库加为技能源 (tap)
+hermes skills tap add techysy/yangyu-hermes-skills
+
+# 2. 用短名安装任意技能
+hermes skills install feishu-table-render
+```
+
+### 方式二：完整 identifier 安装
+
+```bash
+# 用 owner/repo/<category>/<name> 完整标识直接安装 (无需注册)
+hermes skills install techysy/yangyu-hermes-skills/productivity/feishu-table-render
 ```
 
 **示例 / Examples:**
 ```bash
-hermes skills install feishu-table-render --repo techysy/yangyu-hermes-skills
-hermes skills install feishu-markdown --repo techysy/yangyu-hermes-skills
-hermes skills install lark-streaming --repo techysy/yangyu-hermes-skills
-hermes skills install strava-api --repo techysy/yangyu-hermes-skills
-hermes skills install outdoor-trip-planner --repo techysy/yangyu-hermes-skills
-hermes skills install hermes-voice-tts --repo techysy/yangyu-hermes-skills
-hermes skills install xiaomi-mimo-audio --repo techysy/yangyu-hermes-skills
-hermes skills install hermes-cost-management --repo techysy/yangyu-hermes-skills
-hermes skills install 9router-currency-rmb --repo techysy/yangyu-hermes-skills
-hermes skills install linux-proxy --repo techysy/yangyu-hermes-skills
-hermes skills install git-project-lifecycle --repo techysy/yangyu-hermes-skills
-hermes skills install git-release-troubleshooting --repo techysy/yangyu-hermes-skills
-hermes skills install readme-structure --repo techysy/yangyu-hermes-skills
+# 方式二: 完整 identifier
+hermes skills install techysy/yangyu-hermes-skills/productivity/feishu-table-render
+hermes skills install techysy/yangyu-hermes-skills/productivity/feishu-markdown
+hermes skills install techysy/yangyu-hermes-skills/hermes/lark-streaming
+hermes skills install techysy/yangyu-hermes-skills/social-media/strava-api
+hermes skills install techysy/yangyu-hermes-skills/cycling/outdoor-trip-planner
+hermes skills install techysy/yangyu-hermes-skills/hermes/hermes-voice-tts
+hermes skills install techysy/yangyu-hermes-skills/mlops/xiaomi-mimo-audio
+hermes skills install techysy/yangyu-hermes-skills/mlops/hermes-cost-management
+hermes skills install techysy/yangyu-hermes-skills/mlops/9router-currency-rmb
+hermes skills install techysy/yangyu-hermes-skills/networking/linux-proxy
+hermes skills install techysy/yangyu-hermes-skills/software-development/git-project-lifecycle
+hermes skills install techysy/yangyu-hermes-skills/software-development/git-release-troubleshooting
+hermes skills install techysy/yangyu-hermes-skills/software-development/readme-structure
 ```
+
+> ⚠️ **旧语法已废弃**：`hermes skills install <name> --repo <owner/repo>` 中的 `--repo` 参数在新版 Hermes 已移除，请改用上述方式一或方式二。
 
 ---
 
@@ -56,7 +71,7 @@ hermes skills install readme-structure --repo techysy/yangyu-hermes-skills
 
 ## 📋 前置依赖 / Prerequisites
 
-- `outdoor-trip-planner` 需要安装第三方 [12306 skill](https://github.com/techysy/yangyu-hermes-skills) — `hermes skills install 12306`
+- `outdoor-trip-planner` 需要安装第三方 [12306 skill](https://github.com/techysy/yangyu-hermes-skills)。先用 `hermes skills tap add <owner>/<repo>` 添加其仓库，再 `hermes skills install 12306`（或直接 `hermes skills install <owner>/<repo>/<path-to-12306>`）
 - `strava-api` 需要配置 Strava API 凭据 / needs Strava API credentials configured
 
 ---
