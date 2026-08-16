@@ -5,6 +5,7 @@
 
 [![GitHub](https://img.shields.io/badge/GitHub-yangyu--hermes--skills-blue)](https://github.com/techysy/yangyu-hermes-skills)
 [![Skills](https://img.shields.io/badge/skills-12-green.svg)](#-技能列表)
+[![Last Commit](https://img.shields.io/github/last-commit/techysy/yangyu-hermes-skills)](https://github.com/techysy/yangyu-hermes-skills)
 
 ---
 
