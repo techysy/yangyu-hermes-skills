@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-08-21
+
+### 新增 / Added
+- **hermes-core-zh-localization** — 汉化 Hermes 核心系统消息（网关状态/工具进度/会话错误/提供商错误）为中文，含 install/uninstall 脚本
+- 技能数 12 → **13**
+
+---
+
 ## 2026-08-16
 
 ### 合并 / Merged
