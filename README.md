@@ -4,7 +4,7 @@
 > YangYu's Hermes Agent Skills Hub
 
 [![GitHub](https://img.shields.io/badge/GitHub-yangyu--hermes--skills-blue)](https://github.com/techysy/yangyu-hermes-skills)
-[![Skills](https://img.shields.io/badge/skills-12-green.svg)](#-技能列表)
+[![Skills](https://img.shields.io/badge/skills-13-green.svg)](#-技能列表)
 [![Last Commit](https://img.shields.io/github/last-commit/techysy/yangyu-hermes-skills)](https://github.com/techysy/yangyu-hermes-skills)
 
 ---
@@ -39,6 +39,7 @@ hermes skills install techysy/yangyu-hermes-skills/mlops/hermes-cost-management
 hermes skills install techysy/yangyu-hermes-skills/networking/linux-proxy
 hermes skills install techysy/yangyu-hermes-skills/software-development/git-project-lifecycle
 hermes skills install techysy/yangyu-hermes-skills/software-development/readme-structure
+hermes skills install techysy/yangyu-hermes-skills/hermes/hermes-core-zh-localization
 ```
 
 > ⚠️ **旧语法已废弃**：`hermes skills install <name> --repo <owner/repo>` 中的 `--repo` 参数在新版 Hermes 已移除，请改用上述方式一或方式二。
@@ -56,6 +57,7 @@ hermes skills install techysy/yangyu-hermes-skills/software-development/readme-s
 | `hermes-cost-management` | 💰 mlops | Hermes 成本管理（余额查询 + 模型定价）/ cost management & model pricing |
 | `linux-proxy` | 🔗 networking | Linux 代理配置（Clash Meta/Mihomo 含 fnOS）/ Linux proxy setup |
 | `git-project-lifecycle` | 🚀 software-development | Git 项目全生命周期（提交规范/版本/变更日志/发版/排障）/ Git project lifecycle & troubleshooting |
+| `hermes-core-zh-localization` | 🔌 hermes | 汉化 Hermes 核心系统消息为中文（网关状态/工具进度/错误提示）/ Localize Hermes core status messages to Chinese |
 | `readme-structure` | 🚀 software-development | 开源项目 README 结构规范（中英分离/按读者分层）/ README structure convention |
 
 ---
