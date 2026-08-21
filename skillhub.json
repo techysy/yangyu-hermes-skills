@@ -35,6 +35,10 @@
     "lark-streaming": {
       "path": "skills/hermes/lark-streaming",
       "description": "飞书/Lark CardKit v2.0 流式卡片插件安装指南（hermes-lark-streaming）"
+    },
+    "hermes-core-zh-localization": {
+      "path": "skills/hermes/hermes-core-zh-localization",
+      "description": "汉化 Hermes 核心系统消息为中文（网关状态/工具进度/错误提示）——hermes update 后需重新应用"
     }
   }
 }
