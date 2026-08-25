@@ -38,7 +38,47 @@
     },
     "hermes-core-zh-localization": {
       "path": "skills/hermes/hermes-core-zh-localization",
-      "description": "汉化 Hermes 核心系统消息为中文（网关状态/工具进度/错误提示）——hermes update 后需重新应用"
+      "description": "汉化 Hermes 核心系统消息（网关状态、工具进度、错误提示）为中文——含 language: en 冲突校验。hermes update 后需重新应用"
+    },
+    "feishu-bot-cards": {
+      "path": "skills/productivity/feishu-bot-cards",
+      "description": "飞书/Lark 卡片与消息发送（Bot API）——GitHub Release 发版通知卡片、自定义机器人 webhook、错误码排障；附 mihomo-core v1.1.2 完整发版流程 9 步清单（可行性报告→测试→打包→Release→群通知）"
+    },
+    "hermes-fry-cards": {
+      "path": "skills/software-development/hermes-fry-cards",
+      "description": "Hermes 飞书流式卡片插件开发（hermes-fry-cards）——CardKit v2.0 流式打字机、模型别名、token 吊销自愈、hook 注入架构与测试"
+    },
+    "github-repo-audit": {
+      "path": "skills/software-development/github-repo-audit",
+      "description": "GitHub 仓库发布一致性审查——版本号三源对齐、发布产物内容比对、i18n key 完整性、LICENSE/仓库卫生、大型项目结构完整性审查"
+    },
+    "git-history-cleanup": {
+      "path": "skills/software-development/git-history-cleanup",
+      "description": "Git 历史清理（git-filter-repo）——敏感信息彻底清除、作者重写、fork 历史斩断，含验证步骤"
+    },
+    "nextjs-app-router-dev": {
+      "path": "skills/software-development/nextjs-app-router-dev",
+      "description": "Next.js App Router 开发与排障——Edge middleware、SQLite、session 认证"
+    },
+    "nextjs-sqlite-backend": {
+      "path": "skills/software-development/nextjs-sqlite-backend",
+      "description": "Next.js + SQLite 后端构建——加密存储、数据层设计"
+    },
+    "hermes-plugin-i18n": {
+      "path": "skills/hermes/hermes-plugin-i18n",
+      "description": "为 Hermes 插件添加 i18n 汉化支持——前端 zh.ts + 后端 plugin_api.py 双层翻译"
+    },
+    "github-pr-workflow": {
+      "path": "skills/github/github-pr-workflow",
+      "description": "GitHub PR 全生命周期——分支、提交、开 PR、CI 状态跟踪、合并"
+    },
+    "github-fork-cleanup": {
+      "path": "skills/github/github-fork-cleanup",
+      "description": "Fork → 独立仓库转换——清理历史、保留归属、重命名发布"
+    },
+    "fryrouter-dev": {
+      "path": "skills/fnos-appdev/fryrouter-dev",
+      "description": "fryrouter 项目开发规范——数据库 schema、编码约定、架构决策、文件结构"
     }
   }
 }

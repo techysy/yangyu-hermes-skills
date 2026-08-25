@@ -1,0 +1,265 @@
+---
+name: hermes-fry-cards
+description: "Develop hermes-fry-cards Feishu/Lark streaming cards plugin."
+version: 1.1.0
+author: yangyu
+license: MIT
+metadata:
+  hermes:
+    tags: [feishu, lark, streaming, cards, plugin, development]
+    related_skills: [lark-streaming]
+---
+
+# hermes-fry-cards 开发指南
+
+> 🍟 **项目地址**：[techysy/hermes-fry-cards](https://github.com/techysy/hermes-fry-cards)
+> 基于 [Cheerwhy/hermes-lark-streaming](https://github.com/Cheerwhy/hermes-lark-streaming) 独立开发版本
+
+## 触发条件
+
+当用户提到 hermes-fry-cards、fry-cards、薯条卡片、飞书卡片插件开发时触发。
+
+## 核心开发原则
+
+### 1. 最小改动原则（最重要）
+
+**永远不要重写文件，只做 targeted patch。**
+
+- 用 `patch` 工具做精确修改，不要用 `write_file` 覆盖整个文件
+- 重写文件会破坏原有结构，导致测试失败（曾导致 150+ 测试失败）
+- 即使觉得代码不完美，也要通过增量 patch 修改
+
+### 2. 配置独立开关
+
+每个功能都要有独立的配置项，不要耦合：
+
+```yaml
+display:
+  platforms:
+    feishu:
+      show_tool_use: true        # 工具面板
+      show_reasoning: true       # 推理展示
+      show_context: true         # 上下文显示
+      context_display_mode: text  # 上下文格式（默认 text，推荐信息风用 text_bar）
+```
+
+### 3. 文档同步
+
+- 改配置/功能后**立即**更新 README.md 与 CHANGELOG.md
+- README 配置表必须与代码一致
+
+### 4. 快速验证
+
+- 改完一个功能就测试，不要攒一堆改动再测
+- 用 `pytest tests/ -q` 验证（基线：499 通过 / 4 失败遗留）
+
+## 项目结构
+
+```
+hermes_fry_cards/
+├── cardkit/
+│   ├── builder.py      # 卡片构建（不要重写！）
+│   ├── markdown.py     # Markdown 处理
+│   └── i18n.py         # 国际化
+├── streaming/          # 流式卡片运行时
+│   ├── controller.py   # 建卡/flush/拆卡/完成编排
+│   ├── session.py      # CardSession 状态机 + 注册/失败标记
+│   ├── segments.py     # SegmentState 扁平 segment 列表
+│   ├── segment_helper.py  # action 构建 / 元素估算 / 拆卡切点
+│   ├── flush.py        # FlushController 节流调度器
+│   ├── tooluse.py      # ToolUseTracker 工具生命周期
+│   ├── image.py        # ImageResolver 图片转 img_key
+│   └── unavailable_guard.py  # 消息撤回自动终止
+├── controller.py       # StreamCardController 主控制器
+├── config.py           # 配置读取
+├── patch.py            # AST 注入逻辑
+└── patcher.py          # Hook 注入器
+```
+
+## 常用命令
+
+```bash
+# 安装
+HERMES_PYTHON=~/.hermes/hermes-agent/venv/bin/python3
+$HERMES_PYTHON -m pip install -e .
+$HERMES_PYTHON -m hermes_fry_cards verify
+$HERMES_PYTHON -m hermes_fry_cards install
+
+# 测试
+$HERMES_PYTHON -m pytest tests/ -q
+
+# 卸载
+$HERMES_PYTHON -m hermes_fry_cards uninstall
+```
+
+> 网关重启必须在**外部终端**执行，不能从 gateway 进程内部触发。
+
+## 配置项参考（0.1.1 默认值）
+
+| 配置项 | 说明 | 默认值 |
+|--------|------|--------|
+| `streaming.enabled` | 启用流式卡片 | `true` |
+| `show_tool_use` | 展示工具调用面板 | `true` |
+| `show_reasoning` | 展示推理过程 | `true`（2026-08-24 起默认开启，commit ca5a74c） |
+| `show_context` | 统一面板 header 显示上下文窗口 | `true` |
+| `context_display_mode` | `text`/`bar`/`text_bar`（block 已废弃） | `text`（2026-08-21 起，commit 9c76473） |
+| `max_reasoning_panels` | 最多保留独立推理面板数，超出合并防溢出 | `3` |
+| `unified_panel_min_duration` | 无工具或耗时 ≤ 此值不显示统一面板（秒） | `5` |
+| `truncate_model_name` | 截断模型名（`nvidia/moonshotai/kimi-k3` → `⇲kimi-k3`） | `true` |
+| 模型别名 | `~/.hermes/model_aliases.json`：`{"longcat": "哈基米"}` 子串匹配，命中优先于截断；每次渲染重读热更新 | 无 |
+| `panel_expanded` | 完成态面板保持展开 | `false` |
+| `header.enabled` | 顶部状态栏 | `true` |
+| `footer.enabled` | 底部元数据栏 | `false` |
+| `footer.fields` | footer 字段顺序 | `status→elapsed→model→context` |
+| `width_mode` | 卡片宽度 | `default` |
+
+> rc7 起默认值对齐推荐配置，新装开箱即用。
+
+## 上下文显示格式
+
+| `context_display_mode` | 效果 |
+|------------------------|------|
+| `text`（默认） | `55.6k/1.0m (5%)` |
+| `bar` | `[███▓▒░░░] 35%`（渐变阴影） |
+| `text_bar` | `20k/1.0m [███▓▒░░░] 21%` |
+
+> block/block_text 已废弃，桌面端/移动端显示不一致，自动回落 bar/text_bar。
+
+## 热更新 vs 需重启
+
+| 类型 | 配置项 |
+|------|--------|
+| **热更新**（改 config.yaml 下一条消息生效） | show_reasoning / show_tool_use / show_context / context_display_mode / max_reasoning_panels / unified_panel_min_duration / truncate_model_name |
+| **需重启网关** | 插件代码、streaming.enabled、header/footer/body/width_mode 结构类配置、飞书凭据 |
+
+## 发布流程
+
+1. 更新 `pyproject.toml` 和 `__init__.py` 版本号
+2. 更新 `CHANGELOG.md`
+3. 更新 `release-notes.md`
+4. 提交推送，打 tag `git tag vX.Y.Z && git push origin vX.Y.Z`
+5. `gh release create vX.Y.Z --notes-file release-notes.md INSTALL.md hermes-fry-cards-skill.md`
+6. Release 正文末尾补 Full Changelog 对比链接
+
+## 已知遗留问题（基线失败，非新引入）
+
+- `test_multiple_tool_segments_merged_into_single_bottom_panel`
+- `test_footer_present_by_default`
+- `test_split_flushes_pending_actions_then_moves_to_next_card`
+- `test_batch_update_recovers_stale_segment_on_missing_element`
+
+## 架构要点（0.1.1）
+
+- **session 生命周期统一**：注册走 `_register_session`、清理走 `_dispose_session`（幂等）；interrupt 接管后旧 session 清理不会误删新映射；同 message_id 终态 session 可重建
+- **FlushController 竞态防护**：完成态快照防误重刷；立即 flush 先取消遗留 timer 防双刷
+- **fallback 单一决策点**：卡片无法收尾统一走 `_yield_to_gateway(reason=...)`
+- **失败原因可追溯**：`mark_failed(reason=...)` 记录首次原因且幂等保留
+- **日志事件标准化**：session_created / card_created / card_reply_failed / fallback_to_text / stale_pruned / session_disposed
+
+## 运维要点
+
+### token 被 99991663 吊销的自动恢复
+
+飞书开放平台后台**保存权限变更 / 发版 / 停用再启用**会立即吊销所有已发出的 tenant_token，
+而 lark-oapi SDK 的 LocalCache 在 TTL 内不会剔除旧 token → 持续 99991663 直到进程重启。
+
+`_checked_call` 已内置恢复：遇到 99991663 → `invalidate_token_cache()` 清 SDK 缓存 → 重试一次。
+日志特征：`token invalidated (code=99991663, likely app version/permission change), cleared SDK token cache`。
+发版后若仍见连续 99991663 超过 1 分钟才需要人工介入。
+
+## 相关资源
+
+- **核心汉化补丁**：`skills/hermes-core-zh-localization/`（仓库内附带，安装方式见 SKILL.md）
+- **模型别名配置**：`~/.hermes/model_aliases.json`（独立 JSON，子串匹配，热更新）
+- **i18n 与系统语言**：[references/i18n-language-config.md](references/i18n-language-config.md)（补丁语言校验 + 卡片层 i18n 方案）
+
+## 踩坑记录
+
+### 2026-08-24：模型别名子串重叠导致匹配错误
+
+**现象**：`deepseek-v4-flash-vision-exp` 本应显示"大眼鲸"，实际显示"梁文谷"。
+
+**根因**：别名匹配按 JSON 顺序取首个命中（`key in lowered` 子串匹配）。`deepseek-v4-flash-vision-exp` 包含 `deepseek-v4-flash` 子串，所以 flash 的 key 先命中。
+
+**修复**：更具体的 key 必须排在前面。正确顺序：
+```json
+{
+  "deepseek-v4-flash-vision-exp": "大眼鲸",
+  "deepseek-v4-flash": "梁文谷",
+  "deepseek-v4-pro": "梁文锋"
+}
+```
+
+**通用规则**：当两个 key 存在包含关系时，**更长的 key 放前面**。
+
+### 2026-08-24：yaml.dump() 覆盖 config.yaml 丢失所有注释
+
+**现象**：用 `yaml.dump()` 修改 `config.yaml` 后，所有 `#` 注释全丢。
+
+**根因**：PyYAML 的 `dump()` 不保留注释（注释不是 YAML 数据结构的一部分）。
+
+**修复**：用**行级文本编辑**（`sed`/Python 按行操作），或 `hermes config set` 命令。
+
+**教训**：任何 `yaml.safe_load` → `yaml.safe_dump` 往返操作都会丢注释，禁止用于 Hermes 配置文件。
+
+### 2026-08-24：自定义 Provider 模型显示 200k 而非 1M 上下文
+
+**现象**：`olc/LongCat-2.0` 通过 9router 代理，卡片上下文显示 200k 而非实际 1M。
+
+**根因**：Hermes 的 `get_model_context_length` 多步探测（硬编码表 → 缓存 → live probe → 默认 256K）全部 miss，回落到默认 256K。9router 代理未暴露 `/models` 接口，live probe 查不到 LongCat 上下文长度。
+
+**修复**：在 `config.yaml` 的 `custom_providers.models.<name>` 下加 `context_length` 覆盖：
+```yaml
+- name: 9Router Proxy
+  models:
+    olc/LongCat-2.0:
+      context_length: 1000000
+```
+
+**上下文**：Hermes 的上下文长度解析顺序（`get_model_context_length`）：
+1. config override（`model.context_length` / `custom_providers` per-model）
+2. model_overrides config
+3. persistent cache
+4. AWS Bedrock static table
+5. live `/models` probe
+6. local server query
+7. Anthropic /v1/models API
+8. provider-aware lookups (Nous/OpenRouter/Codex)
+9. hardcoded defaults（`DEFAULT_CONTEXT_LENGTHS` 表）
+10. default fallback (256K)
+
+自定义 Provider 模型若不在第 9 步硬编码表中，且 `/models` 不可用，就会回落到 256K。
+
+### 2026-08-21：完成态 reasoning Duplicate ID 导致卡片卡 loading
+
+**现象**：拆卡/完成态卡片一直 loading，日志报 `ElementID reasoning_text: Code 1001: Duplicate ID`（300301），重试 3 次后放弃。
+
+**根因**：`build_complete_card` 收集 reasoning rounds 时丢弃了 `seg.text_el_id`，完成态 update 用默认 `reasoning_text`（REASONING_TEXT_ELEMENT_ID），与流式阶段已创建的 text element 冲突。CardKit update 是 merge-style，重复 ID 报错 → 完成 update 失败 → 卡片无法封印，loading 残留。
+
+**修复**：收集 reasoning rounds 时保留 `text_el_id`，构建 reasoning panel 时传入（fallback 用带索引唯一 ID，绝不回落固定 `reasoning_text`）：
+```python
+reasoning_rounds.append({"text": seg.text, "elapsed_ms": seg.elapsed_ms, "text_el_id": seg.text_el_id})
+...
+text_el_id = rnd.get("text_el_id") or f"reasoning_text_{i}"  # i 为轮次索引
+_build_reasoning_panel(text=..., text_element_id=text_el_id)
+```
+
+**注意回归根源**：`git checkout <commit>` 恢复 builder.py 时**会丢掉后续的修复**。本次 Duplicate ID 就是 builder.py 重写/恢复后，丢失了 `69943aa` 的 text_el_id 复用逻辑导致的。改代码务必用 targeted patch，不要整文件 checkout/重写。
+
+**教训**：完成态重建卡片时，所有元素 ID 必须复用流式阶段已有的 ID，绝不能用固定默认 ID（CardKit merge-style 下固定 ID 会 Duplicate）。
+
+### 2026-08-21：重写 builder.py 导致 150+ 测试失败
+
+**原因**：用 `write_file` 重写了整个 `builder.py`，破坏了原有结构和测试兼容性。
+
+**修复**：恢复原始文件，用 `patch` 做 targeted 修改。
+
+**教训**：永远不要重写文件，只做 targeted patch。
+
+### 2026-08-21：config.py 覆盖导致测试失败
+
+**原因**：重写 `config.py` 时丢失了 `card_duration_sec` 属性。
+
+**修复**：恢复原始文件，只添加新属性。
+
+**教训**：配置文件也要增量修改。

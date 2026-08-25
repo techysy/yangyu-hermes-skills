@@ -4,7 +4,7 @@
 > YangYu's Hermes Agent Skills Hub
 
 [![GitHub](https://img.shields.io/badge/GitHub-yangyu--hermes--skills-blue)](https://github.com/techysy/yangyu-hermes-skills)
-[![Skills](https://img.shields.io/badge/skills-13-green.svg)](#-技能列表)
+[![Skills](https://img.shields.io/badge/skills-19-green.svg)](#-技能列表)
 [![Last Commit](https://img.shields.io/github/last-commit/techysy/yangyu-hermes-skills)](https://github.com/techysy/yangyu-hermes-skills)
 
 ---
@@ -57,8 +57,18 @@ hermes skills install techysy/yangyu-hermes-skills/hermes/hermes-core-zh-localiz
 | `hermes-cost-management` | 💰 mlops | Hermes 成本管理（余额查询 + 模型定价）/ cost management & model pricing |
 | `linux-proxy` | 🔗 networking | Linux 代理配置（Clash Meta/Mihomo 含 fnOS）/ Linux proxy setup |
 | `git-project-lifecycle` | 🚀 software-development | Git 项目全生命周期（提交规范/版本/变更日志/发版/排障）/ Git project lifecycle & troubleshooting |
-| `hermes-core-zh-localization` | 🔌 hermes | 汉化 Hermes 核心系统消息为中文（网关状态/工具进度/错误提示）/ Localize Hermes core status messages to Chinese |
+| `hermes-core-zh-localization` | 🔌 hermes | 汉化 Hermes 核心系统消息为中文，含 language 冲突校验 / Localize Hermes core messages (v1.1.0) |
 | `readme-structure` | 🚀 software-development | 开源项目 README 结构规范（中英分离/按读者分层）/ README structure convention |
+| `feishu-bot-cards` | 📄 productivity | 飞书卡片发送 + 发版通知 9 步流程固化 / Feishu cards & release notify workflow |
+| `hermes-fry-cards` | 🚀 software-development | 飞书流式卡片插件开发（CardKit v2.0）/ Feishu streaming cards plugin dev |
+| `github-repo-audit` | 🚀 software-development | GitHub 仓库发布一致性审查 / Repo release consistency audit |
+| `git-history-cleanup` | 🚀 software-development | Git 历史清理（敏感信息/fork 斩链）/ Git history cleanup with filter-repo |
+| `nextjs-app-router-dev` | 🚀 software-development | Next.js App Router 开发与排障 / Next.js App Router dev & debugging |
+| `nextjs-sqlite-backend` | 🚀 software-development | Next.js + SQLite 后端构建 / Next.js SQLite backend |
+| `hermes-plugin-i18n` | 🔌 hermes | Hermes 插件 i18n 汉化（前端+后端双层）/ Plugin i18n localization |
+| `github-pr-workflow` | 🐙 github | PR 全生命周期（分支→CI→合并）/ Full PR lifecycle workflow |
+| `github-fork-cleanup` | 🐙 github | Fork → 独立仓库转换 / Convert fork to standalone repo |
+| `fryrouter-dev` | 📦 fnos-appdev | fryrouter 项目开发规范 / Project dev conventions |
 
 ---
 

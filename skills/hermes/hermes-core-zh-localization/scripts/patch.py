@@ -17,6 +17,8 @@ AGENT_FILES = {
     "conversation_loop": HERMES_HOME / "hermes-agent" / "agent" / "conversation_loop.py",
     "stream_diag": HERMES_HOME / "hermes-agent" / "agent" / "stream_diag.py",
     "tool_executor": HERMES_HOME / "hermes-agent" / "agent" / "tool_executor.py",
+    "conversation_compression": HERMES_HOME / "hermes-agent" / "agent" / "conversation_compression.py",
+    "tui_session": HERMES_HOME / "hermes-agent" / "tui_gateway" / "methods_session.py",
 }
 
 # ── 汉化映射表: (文件, 英文, 中文) ──────────────────────────────
@@ -91,6 +93,9 @@ PATCHES = [
      '"代理正在运行 — 使用 /goal status / pause / clear / wait 在运行中操作，或先 /stop 再设置新目标。"'),
     ('run.py', '"Agent is running — use /loop status / pause / stop mid-run, or /stop before setting a new loop."',
      '"代理正在运行 — 使用 /loop status / pause / stop 在运行中操作，或先 /stop 再设置新循环。"'),
+    # Gateway restart notification
+    ('run.py', '"♻ Gateway restarted successfully. Your session continues."',
+     '"♻ 网关重启成功，会话继续。"'),
     # Drain
     ('run.py',
      '"⏳ This agent is draining for a maintenance action and isn\'t "\n                "accepting new turns right now. It\'ll be back in a moment — "\n                "please resend shortly."',
@@ -181,6 +186,13 @@ PATCHES = [
      'agent._touch_activity(f"工具完成: {name} ({tool_duration:.1f}s){_status_suffix}")'),
     ('tool_executor', 'agent._touch_activity(f"tool completed: {function_name} ({tool_duration:.1f}s){_status_suffix}")',
      'agent._touch_activity(f"工具完成: {function_name} ({tool_duration:.1f}s){_status_suffix}")'),
+    # Context compression
+    ('conversation_compression', 'COMPACTION_STATUS_MARKER = "Compacting context"',
+     'COMPACTION_STATUS_MARKER = "压缩上下文"'),
+    ('conversation_compression', 'COMPACTION_DONE_STATUS = "✓ Context compaction complete — continuing turn..."',
+     'COMPACTION_DONE_STATUS = "✓ 上下文压缩完成，继续处理..."'),
+    ('tui_session', 'f"⠋ compressing {before_count} messages "',
+     'f"⠋ 压缩中 {before_count} 条消息 "'),
 ]
 
 
@@ -211,6 +223,35 @@ def _apply_patches(mode: str) -> int:
     return changed
 
 
+def _check_language_config() -> None:
+    """检查 config.yaml 的 language 设置，非中文时拒绝安装.
+
+    补丁将系统消息静态替换为中文，若 config.yaml 中 language 设置为
+    英文（en）或其他非中文值，两者会冲突。此时应先卸载补丁或修改语言设置。
+    """
+    config_path = HERMES_HOME / "config.yaml"
+    if not config_path.exists():
+        return  # 无配置文件时默认为中文环境，允许安装
+
+    try:
+        content = config_path.read_text(encoding="utf-8")
+        # 匹配 language: xxx 行（忽略注释）
+        import re
+
+        m = re.search(r"^\s*language:\s*(\S+)", content, re.MULTILINE)
+        if m:
+            lang = m.group(1).strip().lower()
+            if lang and lang not in ("zh", "zh-cn", "zh-tw", "zh-hans", "zh-hant", "auto"):
+                print(f"⚠️  config.yaml 中 language 当前为 '{m.group(1).strip()}'，非中文设置。")
+                print("   补丁会将系统消息汉化，与语言设置冲突。")
+                print("   如需汉化，请先在 config.yaml 中设置 language: zh")
+                print("   或运行: hermes config set language zh")
+                print("   若需恢复英文，请运行: python3 patch.py uninstall")
+                sys.exit(1)
+    except Exception as e:
+        print(f"⚠️  读取 config.yaml 失败: {e}")
+
+
 def main():
     if len(sys.argv) < 2 or sys.argv[1] not in ("install", "uninstall"):
         print("用法: python3 patch.py install|uninstall")
@@ -220,6 +261,9 @@ def main():
     label = "汉化" if mode == "install" else "恢复英文"
     print(f"🔧 Hermes 核心{label}补丁 — {mode}")
     print(f"   HERMES_HOME: {HERMES_HOME}")
+
+    if mode == "install":
+        _check_language_config()
 
     if not RUN_PY.exists():
         print(f"❌ 未找到 {RUN_PY}")
