@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-10-12
+
+### 新增 / Added
+- **github-release-workflow** — GitHub Releases 与发布产物全流程管理（创建 Release、产物完整性校验、CI 自动生成 Notes 兜底、跨仓库镜像发版与排障）
+- **12306** — 中国铁路 12306 车次、余票实时查询与同站换乘计算
+- 技能数 16 → **18**
+
+### 变更 / Changed
+- **feishu-bot-cards** — 同步最新实战总结（CardKit Schema 2.0 裸发、静默降级排查、collapsible_panel 规范、230099 字节偏移排查）
+- **github-repo-audit** — 增加文档索引登记核查、既有审查报告回填复核纪律规范
+
+---
+
 ## 2026-08-21
 
 ### 新增 / Added

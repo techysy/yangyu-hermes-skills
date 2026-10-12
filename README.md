@@ -4,7 +4,7 @@
 > YangYu's Hermes Agent Skills Hub
 
 [![GitHub](https://img.shields.io/badge/GitHub-yangyu--hermes--skills-blue)](https://github.com/techysy/yangyu-hermes-skills)
-[![Skills](https://img.shields.io/badge/skills-16-green.svg)](#-技能列表)
+[![Skills](https://img.shields.io/badge/skills-18-green.svg)](#-技能列表)
 [![Last Commit](https://img.shields.io/github/last-commit/techysy/yangyu-hermes-skills)](https://github.com/techysy/yangyu-hermes-skills)
 
 ---
@@ -66,6 +66,8 @@ hermes skills install techysy/yangyu-hermes-skills/hermes/hermes-core-zh-localiz
 | `hermes-plugin-i18n` | 🔌 hermes | Hermes 插件 i18n 汉化（前端+后端双层）/ Plugin i18n localization |
 | `github-pr-workflow` | 🐙 github | PR 全生命周期（分支→CI→合并）/ Full PR lifecycle workflow |
 | `github-fork-cleanup` | 🐙 github | Fork → 独立仓库转换 / Convert fork to standalone repo |
+| `github-release-workflow` | 📦 productivity | GitHub Releases 与发布产物全流程管理（产物校验/CI Notes 兜底/镜像发版）/ Full GitHub release lifecycle |
+| `12306` | 🚄 travel | 中国铁路 12306 车次、余票实时查询与同站换乘计算 / China Railway 12306 ticket & schedule query |
 
 ---
 

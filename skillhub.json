@@ -67,6 +67,14 @@
     "github-fork-cleanup": {
       "path": "skills/github/github-fork-cleanup",
       "description": "Fork → 独立仓库转换——清理历史、保留归属、重命名发布"
+    },
+    "github-release-workflow": {
+      "path": "skills/productivity/github-release-workflow",
+      "description": "GitHub Releases 与发布产物全流程管理——创建 Release、产物完整性校验、CI 自动生成 Notes 兜底、跨仓库镜像发版与排障"
+    },
+    "12306": {
+      "path": "skills/12306",
+      "description": "中国铁路 12306 列车时刻表、余票实时查询与同站换乘车次计算"
     }
   }
 }
