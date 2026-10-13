@@ -11,7 +11,7 @@
 
 ### 变更 / Changed
 - **feishu-bot-cards** — 同步最新实战总结（CardKit Schema 2.0 裸发、静默降级排查、collapsible_panel 规范、230099 字节偏移排查）
-- **github-repo-audit** — 增加文档索引登记核查、既有审查报告回填复核纪律规范
+- **github-repo-audit** — 增加文档索引登记核查、既有审查报告回填复核纪律规范；修复 `scripts/audit_repo.py` 版本提取误报（噪音行过滤 + 徽章/标题/标签语义上下文匹配，拿不准跳过不报；package.json 显式优先级 ui/ > 根 > 其余，Chrome 扩展 manifest 始终权威；段数不同视为不同版本体系跳过比对；构建目录跳过名单补全），35 项回归测试全绿
 
 ---
 
