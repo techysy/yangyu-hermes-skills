@@ -109,7 +109,23 @@ git push origin main
 | 卡片元素 ID 不匹配 | 流式卡片创建时 `show_tool_use` 若硬编码 `False`，后续更新找不到 `tool_panel` element_id |
 | 配置项默认值陷阱 | 复用原项目代码时注意 `show_reasoning` 等开关默认 `false`，推理时卡片不更新 |
 | README 贡献者 | 清理后原项目 contributor 头像需从 README 移除 |
+| 标签污染（幽灵贡献者） | 本地残留的上游 tags（如 `v0.*`）误被 `git push --tags` 推到远端，GitHub 侧边栏瞬间涌入几百个原项目贡献者！删 tag 后依然死锁不刷新 |
 | egg-info 残留 | `__editable__*.py` 和 `*.dist-info` 里仍有旧包名，需 `rm -rf` |
+
+#### 幽灵贡献者彻底清理法（默认分支重构法 / Branch Dance）
+若误推历史 tag 导致侧边栏 Contributors 暴增且数月无法刷新，执行默认分支切换即可强制 GitHub 重构图谱：
+```bash
+# 1. 彻底删除本地与远程的历史旧 tags
+git tag -l "v0.*" | xargs -r git tag -d
+git ls-remote --tags origin "v0.*" | awk '{print $2}' | grep -v '\^{}' | xargs -r git push origin --delete
+
+# 2. 临时切换默认分支迫使 GitHub 销毁旧图谱缓存并重算
+git push origin main:refs/heads/master
+gh api -X PATCH repos/{owner}/{repo} -f default_branch=master
+# 等待 30s~1min 后切回
+gh api -X PATCH repos/{owner}/{repo} -f default_branch=main
+git push origin --delete master
+```
 
 ## 五、权限陷阱
 
@@ -126,3 +142,4 @@ git push origin main
 - 二次开发 → 先 Fork，再 Clone
 - 想推送新远程 → `--depth 1` 浅克隆 + 重新提交
 - 检查 `git log --oneline --all` 确认无原项目 commit
+- **严禁无差别 `git push --tags`**：发版必须单推具体版本标签（`git push origin vX.Y.Z`），防止本地缓存的上游历史标签被带到远端污染贡献者名单！

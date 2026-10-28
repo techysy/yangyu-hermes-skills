@@ -135,9 +135,10 @@ platforms: [linux, macos]
 2. 根据提交类型决定新版本号（SemVer）
 3. 把 `[Unreleased]` 归档为新版本条目（`## [X.Y.Z] - 日期`），分类写入变更
 4. 顶部重建 `[Unreleased]`
-5. 打 git 标签：`git tag vX.Y.Z`
-6. 创建 GitHub Release（从 changelog 提取发布说明）
-7. 更新版本对比链接（文件底部）
+5. 打 git 标签：`git tag -a vX.Y.Z -m "vX.Y.Z release"`
+6. **推送到远程**：`git push origin main && git push origin vX.Y.Z`（⚠️ **严禁 `git push --tags`**：会把本地缓存的上游历史 tags 一股脑推上去，导致 GitHub Actions >3 tags 限流丢弃事件不触发 CI，并把上游几百位贡献者永久带入仓库 Contributors 侧边栏！）
+7. 创建 GitHub Release（从 changelog 提取发布说明）
+8. 更新版本对比链接（文件底部）
 
 ### 生成 changelog 条目
 
@@ -178,9 +179,9 @@ git log v1.2.2..v1.2.3 --oneline
 | 问题 | 原因 | 解决 |
 |---|---|---|
 | 标签与版本号不一致 | 打错标签格式（`1.2.3` 而非 `v1.2.3`） | 统一 `vX.Y.Z`；打错删除重打 |
-| 标签打在错误提交上 | 打包前忘了 commit 最新改动 | `git tag -d vX.Y.Z`，`git tag vX.Y.Z <正确SHA>` |
+| 标签打在错误提交上 | 打包前忘了 commit 最新改动 | `git tag -d vX.Y.Z`，`git tag -a vX.Y.Z <正确SHA> -m "..."` |
 | 标签已推送但想改 | 远程标签无法直接覆盖 | 本地+远程都删：`git push origin :refs/tags/vX.Y.Z`，本地重打再推 |
-| 忘记推标签 | 只 push 了代码没 push tag | `git push --tags` 补推 |
+| 忘记推标签 / 误用批量推标签 | 只 push 了代码没 push tag，或误用了 `--tags` | ⚠️ **严禁 `git push --tags`**（会推送本地缓存的历史/上游 tag，引入幽灵贡献者并导致 GitHub Actions 限流忽略事件不触发 CI！）。必须精确补推：`git push origin vX.Y.Z` |
 | 打了标签但没同步升版本号 | 标签和 changelog 版本脱节 | 打 tag 前先确认 changelog 归档 + 版本字段一致 |
 
 > 真实场景（Chrome 扩展）：`web-jpg-tool`、`navi-bookmarks-chrome` 含 MV3 扩展，Chrome Web Store 版本号来自 `manifest.json`。曾出现 git tag 是 `v0.2.0` 但 `manifest.json` 还是 `0.1.0`，商店版本和源码脱节。→ 三个版本源（git tag / manifest / changelog）必须一致。
@@ -191,8 +192,8 @@ git log v1.2.2..v1.2.3 --oneline
 |---|---|---|
 | Release 说明与 changelog 不一致 | 手动复制遗漏 | 直接从 changelog 版本条目提取发布说明 |
 | Release 指向错误的 tag | 创建时选错目标 | 删除 Release 重建，或编辑指向正确 tag |
-| Release 没触发 CI/工作流 | tag 命名不含 `v` 前缀，工作流只监听 `v*` | 统一 `vX.Y.Z` tag 命名，检查工作流 `on.push.tags` 匹配 |
-| 忘了打 tag 就建 Release | GitHub 要求 Release 绑定 tag | 先 `git tag vX.Y.Z && git push --tags`，再建 Release |
+| Release 没触发 CI/工作流 | tag 命名不含 `v` 前缀；或一次性推送 >3 个 tag 触发 GitHub 丢弃限流 | 统一 `vX.Y.Z` tag 命名；**绝不使用 `git push --tags`**，单个推送 `git push origin vX.Y.Z` |
+| 忘了打 tag 就建 Release | GitHub 要求 Release 绑定 tag | 先 `git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z`，再建 Release |
 | Release 缺附件/产物 | 忘了手动上传构建产物 | 用 GitHub Actions 在 tag 触发时自动构建并上传 |
 | Docker/容器镜像 tag 与 Release 版本不同步 | 镜像 tag 手写错 | 镜像 tag 与 git tag 用同一版本号，工作流里 `${{ github.ref_name }}` 引用 |
 
@@ -208,6 +209,40 @@ git log v1.2.2..v1.2.3 --oneline
 | 发版提交和代码改动混在一起 | 分不清哪个是发版 commit | 发版独立成一条 commit（changelog 归档 + 版本字段），便于回滚和追溯 |
 
 > 真实场景（TypeScript/CLI）：`daily-inspection-checklist` 曾把发版和功能改动塞进同一条 commit，回滚时牵连功能。→ 发版独立 commit，`git revert` 可单独回退版本号而不影响功能代码。
+
+### 5.6 GitHub 幽灵贡献者与标签污染问题（Contributors 暴增）
+
+| 问题 | 原因 | 解决 |
+|---|---|---|
+| 侧边栏 Contributors 出现成百上千陌生头像 | 使用了 `git push --tags` 将本地缓存的上游项目旧 tag（如 `v0.*`）推送到远端，GitHub 索引了这些 tag 指向的历史 commit | 1. 本地删除旧 tag；2. 远端删除旧 tag；3. 采用**默认分支重构法（Branch Dance）**清除缓存（见下方） |
+| 远端删除了旧 tag，侧边栏人数仍几个月不变 | GitHub 删 tag 不会主动 `git prune` 物理删除 commit，默认分支命名空间缓存死锁 | 将默认分支临时切换到另一分支再切回，强制 GitHub 销毁图谱并重建 |
+
+#### 幽灵贡献者彻底清理步骤（默认分支重构法 / Branch Dance）
+
+当 GitHub 侧边栏贡献者列表因历史标签污染而死锁时，**无需等待客服人工工单**，可在 1 分钟内自助彻底清理：
+
+```bash
+# 1. 本地清理全部历史旧 tag（例如 v0.*）
+git tag -l "v0.*" | xargs -r git tag -d
+
+# 2. 远程删除误推的旧 tag
+git ls-remote --tags origin "v0.*" | awk '{print $2}' | grep -v '\^{}' | xargs -r git push origin --delete
+
+# 3. 推送一个临时的 master 分支（与当前干净的 main 完全一致）
+git push origin main:refs/heads/master
+
+# 4. 调用 GitHub CLI 将默认分支切换为 master（迫使 GitHub 销毁原 main 缓存并重新计算）
+gh api -X PATCH repos/{owner}/{repo} -f default_branch=master
+
+# 5. 等待 30 秒至 1 分钟，待 GitHub 异步任务重构完成
+# 6. 将默认分支切回 main
+gh api -X PATCH repos/{owner}/{repo} -f default_branch=main
+
+# 7. 删除临时的 master 分支
+git push origin --delete master
+```
+
+> 真实场景（10Router 开源网关）：10Router 早期曾跟踪上游 9Router 代码，本地缓存了上游的 93 个 `v0.*` tags。发版时误用 `git push origin main --tags`，导致 GitHub 侧边栏瞬间涌入 244 个上游贡献者（显示 Contributors 246），且删除远程 tags 后死锁数月不刷新。通过上述「默认分支重构法」切换后切回，侧边栏在 1 分钟内彻底恢复为干净的 3 人！
 
 ## 六、验证清单
 

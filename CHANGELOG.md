@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-10-28
+
+### 变更 / Changed
+- **git-project-lifecycle** — 增补「5.6 GitHub 幽灵贡献者与标签污染问题」排障条目；将发版推送规范修正为单一标签精确推送（`git push origin vX.Y.Z`），严禁无差别 `git push --tags`（防止触发 Actions >3 tags 丢事件限流及引入外部历史提交者）。
+- **git-history-cleanup** — 在常见坑与预防章节增补「标签污染（幽灵贡献者）」场景与经实战验证的「默认分支重构法（Branch Dance）」彻底清理步骤，彻底解决删 tag 后 GitHub 侧边栏贡献者人数死锁不刷新的顽疾。
+
+---
+
 ## 2026-10-12
 
 ### 新增 / Added
